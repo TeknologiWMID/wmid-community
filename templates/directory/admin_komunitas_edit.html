@@ -1,0 +1,393 @@
+{% extends "directory/base.html" %}
+{% block title %}Edit {{ komunitas.nama_komunitas }} — Admin WMID{% endblock %}
+
+{% block head %}
+<style>
+  .detail-section-title {
+    font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--c-text-muted);margin-bottom:12px;padding-bottom:8px;
+    border-bottom:1px solid var(--c-border);
+  }
+  .detail-row {
+    display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--c-bg-subtle);
+    align-items:center;
+  }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-key  { font-size:12px;color:var(--c-text-muted);width:150px;flex-shrink:0; }
+  .detail-muted { font-size:13px;color:var(--c-text-secondary);flex:1; }
+  .kom-av {
+    width:44px;height:44px;border-radius:10px;background:var(--c-primary);
+    color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;
+    justify-content:center;flex-shrink:0;
+  }
+  .mini-av {
+    width:28px;height:28px;border-radius:50%;background:var(--c-primary);
+    color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;
+    justify-content:center;flex-shrink:0;
+  }
+  .inline-select, .inline-input {
+    font-size:13px;padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;
+    background:var(--c-bg-card);color:var(--c-text);
+  }
+  .inline-select:focus, .inline-input:focus { outline:none;border-color:var(--c-primary); }
+  .field-block { display:flex;flex-direction:column;gap:4px; }
+  .field-block label { font-size:12px;color:var(--c-text-muted); }
+  .field-block input, .field-block select, .field-block textarea {
+    font-size:13px;padding:6px 8px;border:1px solid var(--c-border);border-radius:6px;
+    background:var(--c-bg-card);color:var(--c-text);width:100%;box-sizing:border-box;
+  }
+  .field-block input:focus, .field-block select:focus, .field-block textarea:focus {
+    outline:none;border-color:var(--c-primary);
+  }
+  .field-block textarea { resize:vertical;min-height:80px; }
+  .btn-hapus-row {
+    font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--c-danger);
+    background:transparent;color:var(--c-danger);cursor:pointer;white-space:nowrap;
+    transition:background .1s,color .1s;
+  }
+  .btn-hapus-row:hover { background:var(--c-danger);color:#fff; }
+  .add-row {
+    display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;
+    padding:14px;background:var(--c-bg-subtle);border-radius:8px;margin-top:16px;
+  }
+  .add-row label { font-size:12px;color:var(--c-text-muted);display:block;margin-bottom:4px; }
+  .add-row select, .add-row input {
+    font-size:13px;padding:6px 8px;border:1px solid var(--c-border);border-radius:6px;
+    background:var(--c-bg-card);color:var(--c-text);
+  }
+  .add-row select:focus, .add-row input:focus { outline:none;border-color:var(--c-primary); }
+  .search-wrap { position:relative;flex:1;min-width:220px; }
+  .search-dropdown {
+    display:none;position:absolute;z-index:200;top:100%;left:0;right:0;
+    background:var(--c-bg-card);border:1px solid var(--c-border);border-radius:8px;
+    box-shadow:0 4px 16px rgba(0,0,0,.1);max-height:220px;overflow-y:auto;margin-top:2px;
+  }
+  .search-dropdown-item {
+    padding:8px 12px;cursor:pointer;font-size:13px;
+    border-bottom:1px solid var(--c-bg-subtle);
+  }
+  .search-dropdown-item:hover { background:var(--c-bg-subtle); }
+  .edit-banner {
+    background:var(--c-success-light);color:var(--c-success);
+    font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;margin-bottom:16px;
+  }
+  .toggle-row {
+    display:flex;align-items:center;gap:10px;padding:10px 0;
+  }
+  .toggle-row label { font-size:13px;color:var(--c-text);cursor:pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+{% include "directory/_admin_nav.html" %}
+
+<div class="page-header">
+  <h1 class="page-title">Edit Komunitas</h1>
+  <div class="page-header-actions">
+    <a href="{% url 'admin_komunitas_detail' komunitas.slug %}" class="btn btn-secondary btn-sm">&larr; Kembali</a>
+  </div>
+</div>
+
+{% if messages %}
+{% for msg in messages %}<div class="edit-banner">{{ msg }}</div>{% endfor %}
+{% endif %}
+
+<form method="post">
+{% csrf_token %}
+
+<!-- Header card -->
+<div class="card" style="padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+  {% if komunitas.logo %}
+    <img src="{{ komunitas.logo }}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:contain;border:1px solid var(--c-border);background:var(--c-bg-subtle);flex-shrink:0">
+  {% else %}
+    <div class="kom-av">{{ komunitas.nama_komunitas|first|upper }}</div>
+  {% endif %}
+  <div style="flex:1;min-width:0">
+    <input type="text" name="nama_komunitas" value="{{ komunitas.nama_komunitas }}" class="inline-input"
+           style="font-size:16px;font-weight:700;width:100%;max-width:360px" required>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <select name="jenis_komunitas" class="inline-select">
+        <option value="">— Jenis —</option>
+        {% for val, label in komunitas.JENIS_CHOICES %}
+        <option value="{{ val }}" {% if komunitas.jenis_komunitas == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label class="toggle-row" style="padding:0">
+        <input type="checkbox" name="is_active" {% if komunitas.is_active %}checked{% endif %}
+               style="width:15px;height:15px;accent-color:var(--c-primary)">
+        <span style="font-size:13px">Aktif</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- Info (editable) -->
+<div class="card" style="padding:20px;margin-bottom:20px;display:flex;flex-direction:column;gap:14px">
+  <p class="detail-section-title" style="margin-bottom:0">Informasi</p>
+  <div class="field-block">
+    <label>Narahubung</label>
+    <div style="position:relative">
+      <input type="text" id="narahubung-input" autocomplete="off"
+             placeholder="Cari nama anggota…"
+             value="{{ komunitas.narahubung.display_label|default:'' }}"
+             style="font-size:13px;padding:6px 8px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-bg-card);color:var(--c-text);width:100%;box-sizing:border-box">
+      <input type="hidden" name="narahubung_id" id="narahubung-id"
+             value="{{ komunitas.narahubung_id|default:'' }}">
+      <div id="narahubung-dd" class="search-dropdown"></div>
+    </div>
+    {% if komunitas.narahubung %}
+    <div id="narahubung-clear-wrap" style="margin-top:4px">
+      <button type="button" id="narahubung-clear"
+              style="font-size:12px;color:var(--c-danger);background:none;border:none;cursor:pointer;padding:0">
+        Hapus narahubung
+      </button>
+    </div>
+    {% endif %}
+  </div>
+  <div class="field-block">
+    <label>Deskripsi</label>
+    <textarea name="deskripsi">{{ komunitas.deskripsi }}</textarea>
+  </div>
+  <div class="field-block">
+    <label>URL logo</label>
+    <input type="url" name="logo" value="{{ komunitas.logo }}" placeholder="https://…">
+  </div>
+  <div class="field-block">
+    <label>Pranala informasi</label>
+    <input type="url" name="pranala_informasi" value="{{ komunitas.pranala_informasi }}" placeholder="https://…">
+  </div>
+  <div class="detail-row" style="padding-top:4px">
+    <span class="detail-key">Slug</span>
+    <span class="detail-muted"><code style="font-size:12px">{{ komunitas.slug }}</code></span>
+  </div>
+  <div class="detail-row">
+    <span class="detail-key">Kode</span>
+    <span class="detail-muted"><code style="font-size:12px">{{ komunitas.kode }}</code></span>
+  </div>
+</div>
+
+<div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:20px">
+  <a href="{% url 'admin_komunitas_detail' komunitas.slug %}" class="btn btn-secondary">Batal</a>
+  <button type="submit" class="btn btn-primary">Simpan perubahan</button>
+</div>
+
+</form>
+
+<!-- Anggota (separate form actions) -->
+<div class="card" style="padding:20px;margin-bottom:20px">
+  <p class="detail-section-title">Anggota <span style="font-weight:400;text-transform:none;letter-spacing:0">({{ anggota_qs.count }})</span></p>
+
+  {% if anggota_qs %}
+  <div class="tbl-wrap">
+    <table style="min-width:420px">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ka in anggota_qs %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="mini-av">{{ ka.member.display_label|first|upper }}</div>
+              <div>
+                <div style="font-size:13px;font-weight:600">{{ ka.member.display_label }}</div>
+                {% if ka.member.wikimedia_username %}<div class="meta">@{{ ka.member.wikimedia_username }}</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td style="text-align:right">
+            <form method="post" style="display:inline">
+              {% csrf_token %}
+              <button type="submit" name="hapus_anggota" value="{{ ka.pk }}" class="btn-hapus-row"
+                onclick="confirmHapus(event, 'Hapus anggota ini dari komunitas?')">Hapus</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="meta" style="margin-bottom:0">Belum ada anggota.</p>
+  {% endif %}
+
+  <!-- Tambah anggota -->
+  <script id="anggota-data" type="application/json">
+    [{% for m in anggota_tersedia %}{"id":{{ m.id }},"nama":"{{ m.display_name|default:m.wikimedia_username|default:m.email|escapejs }}","username":"{{ m.wikimedia_username|default:''|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+  </script>
+  <input type="hidden" name="new_member_id" id="new-member-id">
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="new_member_id" id="new-member-id-form">
+    <div class="add-row">
+      <div class="search-wrap">
+        <label>Tambah anggota</label>
+        <input type="text" id="member-search" placeholder="Cari nama atau username…" autocomplete="off" style="width:100%;box-sizing:border-box">
+        <div id="member-dropdown" class="search-dropdown"></div>
+      </div>
+      <button type="submit" name="_add_anggota" value="1" class="btn btn-secondary btn-sm" id="btn-add-member" disabled>Tambah</button>
+    </div>
+  </form>
+</div>
+
+<!-- Kegiatan -->
+<div class="card" style="padding:20px;margin-bottom:32px">
+  <p class="detail-section-title">Kegiatan <span style="font-weight:400;text-transform:none;letter-spacing:0">({{ kegiatan_qs.count }})</span></p>
+
+  {% if kegiatan_qs %}
+  <div class="tbl-wrap">
+    <table style="min-width:480px">
+      <thead>
+        <tr>
+          <th>Kegiatan</th>
+          <th>Tanggal</th>
+          <th>Jenis</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for kg in kegiatan_qs %}
+        <tr>
+          <td>
+            <a href="{% url 'kegiatan_detail' kg.kode %}" style="font-size:13px;font-weight:500">{{ kg.judul }}</a>
+            <div class="meta">{{ kg.kode }}</div>
+          </td>
+          <td class="meta" style="white-space:nowrap">{{ kg.tanggal_mulai|date:"d M Y" }}</td>
+          <td class="meta">{{ kg.jenis_kegiatan|default:"—" }}</td>
+          <td style="text-align:right">
+            <form method="post" style="display:inline">
+              {% csrf_token %}
+              <button type="submit" name="hapus_kegiatan" value="{{ kg.id }}" class="btn-hapus-row"
+                onclick="confirmHapus(event, 'Lepas kegiatan ini dari komunitas?')">Hapus</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="meta" style="margin-bottom:0">Belum ada kegiatan.</p>
+  {% endif %}
+
+  <!-- Tambah kegiatan -->
+  <script id="kegiatan-data" type="application/json">
+    [{% for kg in kegiatan_tersedia %}{"id":{{ kg.id }},"judul":"{{ kg.judul|escapejs }}","kode":"{{ kg.kode }}","tgl":"{{ kg.tanggal_mulai|date:'d M Y' }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+  </script>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="new_kegiatan_id" id="new-kg-id-form">
+    <div class="add-row">
+      <div class="search-wrap">
+        <label>Tambah kegiatan</label>
+        <input type="text" id="kg-search" placeholder="Cari judul atau kode…" autocomplete="off" style="width:100%;box-sizing:border-box">
+        <div id="kg-dropdown" class="search-dropdown"></div>
+      </div>
+      <button type="submit" name="_add_kegiatan" value="1" class="btn btn-secondary btn-sm" id="btn-add-kg" disabled>Tambah</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+  function makeSearch(inputId, dropdownId, dataId, hiddenId, btnId, labelKey, subKey) {
+    const data     = JSON.parse(document.getElementById(dataId).textContent);
+    const input    = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    const hidden   = document.getElementById(hiddenId);
+    const btn      = document.getElementById(btnId);
+
+    function render(items) {
+      dropdown.innerHTML = '';
+      if (!items.length) {
+        dropdown.innerHTML = '<div class="search-dropdown-item" style="color:var(--c-text-muted)">Tidak ditemukan.</div>';
+      }
+      items.slice(0, 40).forEach(item => {
+        const d = document.createElement('div');
+        d.className = 'search-dropdown-item';
+        const sub = subKey && item[subKey] ? `<div style="font-size:11px;color:var(--c-text-muted)">${item[subKey]}</div>` : '';
+        d.innerHTML = `<div style="font-weight:600">${item[labelKey]}</div>${sub}`;
+        d.addEventListener('mousedown', e => {
+          e.preventDefault();
+          input.value  = item[labelKey];
+          hidden.value = item.id;
+          btn.disabled = false;
+          dropdown.style.display = 'none';
+        });
+        dropdown.appendChild(d);
+      });
+      dropdown.style.display = 'block';
+    }
+
+    input.addEventListener('input', () => {
+      hidden.value = '';
+      btn.disabled = true;
+      const q = input.value.trim().toLowerCase();
+      if (!q) { dropdown.style.display = 'none'; return; }
+      render(data.filter(item => {
+        const label = (item[labelKey] || '').toLowerCase();
+        const sub   = (item[subKey]   || '').toLowerCase();
+        return label.includes(q) || sub.includes(q);
+      }));
+    });
+    input.addEventListener('focus', () => {
+      if (input.value.trim() && !hidden.value) input.dispatchEvent(new Event('input'));
+    });
+    document.addEventListener('click', e => {
+      if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+    });
+  }
+
+  makeSearch('member-search', 'member-dropdown', 'anggota-data', 'new-member-id-form', 'btn-add-member', 'nama', 'username');
+  makeSearch('kg-search',     'kg-dropdown',     'kegiatan-data','new-kg-id-form',     'btn-add-kg',    'judul', 'kode');
+
+  /* ── Narahubung autocomplete ── */
+  const NH_MEMBERS = [{% for ka in anggota_qs %}{"id":{{ ka.member.pk }},"label":"{{ ka.member.display_label|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}];
+  const nhInput    = document.getElementById('narahubung-input');
+  const nhId       = document.getElementById('narahubung-id');
+  const nhDd       = document.getElementById('narahubung-dd');
+  const nhClear    = document.getElementById('narahubung-clear');
+
+  if (nhInput) {
+    nhInput.addEventListener('input', () => {
+      const q = nhInput.value.trim().toLowerCase();
+      if (!q) { nhDd.style.display = 'none'; return; }
+      const hits = NH_MEMBERS.filter(m => m.label.toLowerCase().includes(q)).slice(0, 8);
+      if (!hits.length) { nhDd.style.display = 'none'; return; }
+      nhDd.innerHTML = hits.map(m =>
+        `<div class="search-dropdown-item" data-id="${m.id}" data-label="${m.label}">${m.label}</div>`
+      ).join('');
+      nhDd.querySelectorAll('.search-dropdown-item').forEach(el => {
+        el.addEventListener('click', () => {
+          nhInput.value = el.dataset.label;
+          nhId.value    = el.dataset.id;
+          nhDd.style.display = 'none';
+        });
+      });
+      nhDd.style.display = 'block';
+    });
+    document.addEventListener('click', e => {
+      if (!nhInput.contains(e.target) && !nhDd.contains(e.target)) nhDd.style.display = 'none';
+    });
+  }
+  if (nhClear) {
+    nhClear.addEventListener('click', () => {
+      nhInput.value = '';
+      nhId.value    = '';
+      nhClear.closest('div').style.display = 'none';
+    });
+  }
+})();
+</script>
+
+<style>
+  @media (max-width:640px) {
+    .detail-key { width:110px; }
+    .add-row { flex-direction:column;align-items:stretch; }
+  }
+</style>
+{% endblock %}

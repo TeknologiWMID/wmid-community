@@ -1,0 +1,633 @@
+{% extends "directory/base.html" %}
+{% block title %}{{ kegiatan.judul }} — Admin WMID{% endblock %}
+
+{% block head %}
+<style>
+  .detail-section-title {
+    font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--c-text-muted);margin-bottom:12px;padding-bottom:8px;
+    border-bottom:1px solid var(--c-border);
+  }
+  .detail-row {
+    display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--c-bg-subtle);
+    align-items:baseline;
+  }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-key { font-size:12px;color:var(--c-text-muted);width:150px;flex-shrink:0; }
+  .detail-val { font-size:13px;color:var(--c-text);flex:1;word-break:break-word; }
+  .mini-av {
+    width:28px;height:28px;border-radius:50%;background:var(--c-primary);
+    color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;
+    justify-content:center;flex-shrink:0;
+  }
+  .avail-dot { width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px; }
+  .dot-aktif { background:var(--c-success); }
+  .dot-sibuk { background:var(--c-danger); }
+  .dot-tidak_aktif { background:#D97706; }
+  .role-chip {
+    display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;
+    border-radius:99px;background:var(--c-primary-light);color:var(--c-primary);
+  }
+  .status-pill {
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;
+  }
+  .riwayat-status {
+    display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;
+  }
+  .rs-terverifikasi { background:var(--c-success-light);color:var(--c-success); }
+  .rs-menunggu      { background:var(--c-warn-light);color:#92400E; }
+  .rs-ditolak       { background:#fee2e2;color:#991B1B; }
+  .kom-chip {
+    display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;
+    background:var(--c-primary-light);color:var(--c-primary);margin:2px 2px 2px 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+{% include "directory/_admin_nav.html" %}
+
+<div class="page-header">
+  <h1 class="page-title">Detail Kegiatan</h1>
+  <div class="page-header-actions">
+    <a href="{% url 'admin_kegiatan_data' %}" class="btn btn-secondary btn-sm">&larr; Kembali</a>
+    <button id="btn-imp" class="btn btn-secondary btn-sm">Import peserta</button>
+    <a href="{% url 'admin_kegiatan_edit' kegiatan.kode %}" class="btn btn-primary btn-sm">Edit</a>
+  </div>
+</div>
+
+<!-- Header card -->
+<div class="card" style="padding:20px;margin-bottom:20px">
+  <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <code style="font-size:11px;background:var(--c-bg-subtle);padding:2px 7px;border-radius:4px;color:var(--c-text-secondary)">{{ kegiatan.kode }}</code>
+    {% if kegiatan.jenis_kegiatan %}
+    <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--c-primary-light);color:var(--c-primary)">{{ kegiatan.jenis_kegiatan }}</span>
+    {% endif %}
+    {% if kegiatan.sedang_berlangsung %}
+      <span class="status-pill" style="background:var(--c-success-light);color:var(--c-success)">Berlangsung</span>
+    {% elif kegiatan.sudah_selesai %}
+      <span class="status-pill" style="background:var(--c-bg-subtle);color:var(--c-text-muted)">Selesai</span>
+    {% else %}
+      <span class="status-pill" style="background:var(--c-warn-light);color:#92400E">Akan datang</span>
+    {% endif %}
+  </div>
+  <h2 style="font-size:18px;font-weight:700;letter-spacing:-.02em;margin-bottom:16px">{{ kegiatan.judul }}</h2>
+
+  <div class="detail-row">
+    <span class="detail-key">Tanggal</span>
+    <span class="detail-val">
+      {% if kegiatan.tanggal_mulai|date:"d M Y" == kegiatan.tanggal_selesai|date:"d M Y" %}
+        {{ kegiatan.tanggal_mulai|date:"d M Y" }}, {{ kegiatan.tanggal_mulai|date:"H:i" }}–{{ kegiatan.tanggal_selesai|date:"H:i" }}
+      {% else %}
+        {{ kegiatan.tanggal_mulai|date:"d M Y" }} – {{ kegiatan.tanggal_selesai|date:"d M Y" }}
+      {% endif %}
+    </span>
+  </div>
+  {% if kegiatan.lokasi %}
+  <div class="detail-row">
+    <span class="detail-key">Lokasi</span>
+    <span class="detail-val">{{ kegiatan.lokasi }}</span>
+  </div>
+  {% endif %}
+  <div class="detail-row">
+    <span class="detail-key">Sumber</span>
+    <span class="detail-val">{% if kegiatan.sumber == 'otomatis' %}API{% elif kegiatan.sumber == 'manual-admin' %}Manual — Admin{% else %}Manual — Anggota{% endif %}</span>
+  </div>
+  <div class="detail-row">
+    <span class="detail-key">Komunitas</span>
+    <span class="detail-val">
+      {% for k in kegiatan.komunitas.all %}
+        <span class="kom-chip">{{ k.nama_komunitas }}</span>
+      {% empty %}—{% endfor %}
+    </span>
+  </div>
+  {% if kegiatan.deskripsi %}
+  <div class="detail-row" style="align-items:flex-start">
+    <span class="detail-key" style="padding-top:2px">Deskripsi</span>
+    <span class="detail-val" style="white-space:pre-line">{{ kegiatan.deskripsi }}</span>
+  </div>
+  {% endif %}
+  {% if kegiatan.links.exists %}
+  <div class="detail-row" style="align-items:flex-start">
+    <span class="detail-key" style="padding-top:2px">Tautan</span>
+    <span class="detail-val">
+      {% for link in kegiatan.links.all %}
+      <div style="margin-bottom:4px">
+        <a href="{{ link.url }}" target="_blank" rel="noopener" style="font-size:13px">{{ link.judul_link }}</a>
+      </div>
+      {% endfor %}
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Peserta -->
+<div class="card" style="padding:20px;margin-bottom:20px">
+  <p class="detail-section-title">Peserta <span style="font-weight:400;text-transform:none;letter-spacing:0">({{ kegiatan.peserta_count }} terverifikasi)</span></p>
+  {% if peserta_page %}
+  <div class="tbl-wrap">
+    <table style="min-width:480px">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Peran</th>
+          <th>Status</th>
+          <th>Catatan</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in peserta_page %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="mini-av">{{ p.member.display_label|first|upper }}</div>
+              <div>
+                <div style="font-size:13px;font-weight:600">{{ p.member.display_label }}</div>
+                {% if p.member.wikimedia_username %}<div class="meta">@{{ p.member.wikimedia_username }}</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td><span class="role-chip">{{ p.get_role_display }}</span></td>
+          <td>
+            <span class="riwayat-status rs-{{ p.status }}">
+              {% if p.status == 'terverifikasi' %}Terverifikasi{% elif p.status == 'ditolak' %}Ditolak{% else %}Menunggu{% endif %}
+            </span>
+          </td>
+          <td class="meta" style="font-size:12px">{{ p.catatan|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if peserta_paginator.num_pages > 1 %}
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:13px">
+    <span class="meta">{{ peserta_page.start_index }}–{{ peserta_page.end_index }} dari {{ peserta_paginator.count }} peserta</span>
+    <div style="display:flex;gap:4px">
+      {% if peserta_page.has_previous %}
+        <a href="?peserta_page={{ peserta_page.previous_page_number }}" class="btn btn-secondary btn-sm">&larr;</a>
+      {% endif %}
+      <span style="padding:4px 10px;font-size:12px;color:var(--c-text-muted)">{{ peserta_page.number }} / {{ peserta_paginator.num_pages }}</span>
+      {% if peserta_page.has_next %}
+        <a href="?peserta_page={{ peserta_page.next_page_number }}" class="btn btn-secondary btn-sm">&rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% else %}
+  <p class="meta">Belum ada peserta.</p>
+  {% endif %}
+</div>
+
+</div>
+
+<!-- ===================== IMPORT MODAL ===================== -->
+<div id="imp-modal" style="display:none;position:fixed;inset:0;z-index:9998;align-items:center;justify-content:center;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);padding:16px">
+<div id="imp-box" style="background:var(--c-bg-card);border-radius:var(--radius-lg);width:100%;max-width:780px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.18)">
+
+  <!-- Header -->
+  <div style="padding:20px 24px 16px;border-bottom:1px solid var(--c-border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div>
+      <div style="font-size:15px;font-weight:700">Import Peserta</div>
+      <div style="font-size:12px;color:var(--c-text-muted);margin-top:2px" id="imp-subtitle">Unggah file Excel atau CSV</div>
+    </div>
+    <!-- Step indicator -->
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+      {% for n in "123" %}<span class="imp-dot" id="imp-dot-{{ n }}" style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--c-bg-subtle);color:var(--c-text-muted)">{{ n }}</span>{% if not forloop.last %}<span style="width:20px;height:1px;background:var(--c-border)"></span>{% endif %}{% endfor %}
+    </div>
+    <button id="imp-close" style="background:none;border:none;cursor:pointer;color:var(--c-text-muted);padding:4px;border-radius:var(--radius-sm);display:flex" aria-label="Tutup">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- Body (scrollable) -->
+  <div style="flex:1;overflow-y:auto;padding:24px">
+
+    <!-- STEP 1: Upload -->
+    <div id="imp-s1">
+      <div id="imp-dropzone" style="border:2px dashed var(--c-border);border-radius:var(--radius);padding:40px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Seret file ke sini atau klik untuk memilih</div>
+        <div class="meta">Format: .xlsx, .xls, .csv</div>
+        <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" style="display:none">
+      </div>
+      <div id="imp-parse-err" style="display:none;margin-top:12px;padding:10px 14px;background:var(--c-danger-light);color:var(--c-danger);border-radius:var(--radius);font-size:13px"></div>
+    </div>
+
+    <!-- STEP 2: Column mapping -->
+    <div id="imp-s2" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;padding:10px 14px;background:var(--c-bg-subtle);border-radius:var(--radius)">
+        <input type="checkbox" id="imp-has-header" checked style="width:auto">
+        <label for="imp-has-header" style="font-size:13px;cursor:pointer">Baris pertama adalah nama kolom (header)</label>
+      </div>
+      <p style="font-size:13px;color:var(--c-text-secondary);margin-bottom:14px">Pilih kolom mana yang berisi <strong>Nama</strong> dan <strong>Email</strong> peserta:</p>
+      <div id="imp-col-wrap" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+      <div id="imp-s2-err" style="display:none;margin-top:12px;font-size:12px;color:var(--c-danger)"></div>
+    </div>
+
+    <!-- STEP 3: Preview rows -->
+    <div id="imp-s3" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button id="imp-toggle-all" class="btn btn-secondary btn-sm">Pilih semua</button>
+        <select id="imp-bulk-role" style="font-size:13px;padding:5px 8px;border:1px solid var(--c-border);border-radius:var(--radius-sm);background:var(--c-bg-card)">
+          <option value="peserta">Peserta</option>
+          <option value="pelatih">Pelatih</option>
+          <option value="panitia">Panitia</option>
+          <option value="juri">Juri</option>
+          <option value="narasumber">Narasumber</option>
+          <option value="penanggung_jawab">Penanggung Jawab</option>
+          <option value="lainnya">Lainnya</option>
+        </select>
+        <button id="imp-apply-role" class="btn btn-secondary btn-sm">Terapkan ke semua</button>
+        <span id="imp-sel-count" style="margin-left:auto;font-size:12px;color:var(--c-text-muted)"></span>
+      </div>
+      <div style="border:1px solid var(--c-border);border-radius:var(--radius);overflow:hidden">
+        <div style="overflow-x:auto">
+        <table style="min-width:500px">
+          <thead style="background:var(--c-bg-subtle)">
+            <tr>
+              <th style="width:36px"><input type="checkbox" id="imp-check-all" style="width:auto"></th>
+              <th>Nama</th>
+              <th>Email</th>
+              <th>No. HP</th>
+              <th style="width:160px">Peran</th>
+            </tr>
+          </thead>
+          <tbody id="imp-tbody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Result -->
+    <div id="imp-s4" style="display:none;text-align:center;padding:20px 0">
+      <div id="imp-result-icon" style="margin-bottom:16px"></div>
+      <div id="imp-result-title" style="font-size:16px;font-weight:700;margin-bottom:8px"></div>
+      <div id="imp-result-body" style="font-size:13px;color:var(--c-text-secondary);line-height:1.8"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div id="imp-footer" style="padding:16px 24px;border-top:1px solid var(--c-border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0">
+    <button id="imp-btn-cancel" class="btn btn-secondary btn-sm">Batal</button>
+    <button id="imp-btn-next2" class="btn btn-primary btn-sm" style="display:none" disabled>Lanjut</button>
+    <button id="imp-btn-next3" class="btn btn-primary btn-sm" style="display:none" disabled>Import</button>
+    <button id="imp-btn-done" class="btn btn-primary btn-sm" style="display:none">Tutup</button>
+  </div>
+</div>
+</div>
+
+<style>
+  .imp-col-card {
+    border:1px solid var(--c-border);border-radius:var(--radius);padding:12px;
+    width:180px;flex-shrink:0;background:var(--c-bg-card);
+  }
+  .imp-col-card-name {
+    font-size:12px;font-weight:600;color:var(--c-text);margin-bottom:6px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .imp-col-samples {
+    font-size:11px;color:var(--c-text-muted);margin-bottom:8px;
+    min-height:36px;line-height:1.6;
+  }
+  .imp-col-samples span { display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .imp-col-select {
+    width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--c-border);
+    border-radius:var(--radius-sm);background:var(--c-bg-card);color:var(--c-text);
+  }
+  .imp-col-card.mapped-nama  { border-color:var(--c-primary);background:var(--c-primary-light); }
+  .imp-col-card.mapped-email { border-color:var(--c-success);background:var(--c-success-light); }
+  .imp-col-card.mapped-hp    { border-color:#D97706;background:var(--c-warn-light); }
+  #imp-dropzone:hover,#imp-dropzone.drag-over { border-color:var(--c-primary);background:var(--c-primary-light); }
+  @media (max-width:640px) {
+    .imp-col-card { width:140px; }
+    .detail-key { width:100px; }
+  }
+</style>
+
+<script>
+(function(){
+  const XLSX_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  let _xlsxReady = false, _xlsxCbs = [];
+  function loadXlsx(cb) {
+    if (_xlsxReady) { cb(); return; }
+    _xlsxCbs.push(cb);
+    if (_xlsxCbs.length > 1) return;
+    const s = document.createElement('script');
+    s.src = XLSX_CDN;
+    s.onload = () => { _xlsxReady = true; _xlsxCbs.forEach(f => f()); _xlsxCbs = []; };
+    document.head.appendChild(s);
+  }
+
+  const ROLES = [
+    ['peserta','Peserta'],['pelatih','Pelatih'],['panitia','Panitia'],
+    ['juri','Juri'],['narasumber','Narasumber'],
+    ['penanggung_jawab','Penanggung Jawab'],['lainnya','Lainnya'],
+  ];
+
+  // State
+  let rawRows = [];      // array of arrays from sheet
+  let colMap  = {};      // {idx: 'nama'|'email'|'skip'}
+  let importRows = [];   // [{nama, email, role, selected}]
+
+  // Elements
+  const modal     = document.getElementById('imp-modal');
+  const dropzone  = document.getElementById('imp-dropzone');
+  const fileInput = document.getElementById('imp-file');
+  const s1 = document.getElementById('imp-s1');
+  const s2 = document.getElementById('imp-s2');
+  const s3 = document.getElementById('imp-s3');
+  const s4 = document.getElementById('imp-s4');
+  const btnNext2  = document.getElementById('imp-btn-next2');
+  const btnNext3  = document.getElementById('imp-btn-next3');
+  const btnDone   = document.getElementById('imp-btn-done');
+  const btnCancel = document.getElementById('imp-btn-cancel');
+  const subtitle  = document.getElementById('imp-subtitle');
+
+  function setStep(n) {
+    [s1,s2,s3,s4].forEach((el,i) => el.style.display = i+1===n ? '' : 'none');
+    btnNext2.style.display = n===2 ? '' : 'none';
+    btnNext3.style.display = n===3 ? '' : 'none';
+    btnDone.style.display  = n===4 ? '' : 'none';
+    btnCancel.style.display = n===4 ? 'none' : '';
+    [1,2,3].forEach(i => {
+      const d = document.getElementById('imp-dot-'+i);
+      d.style.background = i <= n ? 'var(--c-primary)' : 'var(--c-bg-subtle)';
+      d.style.color       = i <= n ? '#fff' : 'var(--c-text-muted)';
+    });
+    const labels = ['Unggah file','Petakan kolom','Pilih & atur peserta'];
+    subtitle.textContent = labels[Math.min(n,3)-1];
+  }
+
+  function openModal() {
+    rawRows = []; colMap = {}; importRows = [];
+    fileInput.value = '';
+    document.getElementById('imp-parse-err').style.display = 'none';
+    modal.style.display = 'flex';
+    setStep(1);
+  }
+  function closeModal() { modal.style.display = 'none'; }
+
+  document.getElementById('btn-imp').addEventListener('click', openModal);
+  btnCancel.addEventListener('click', closeModal);
+  document.getElementById('imp-close').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.style.display !== 'none') closeModal();
+  });
+
+  // Drag & drop
+  dropzone.addEventListener('click', () => loadXlsx(() => fileInput.click()));
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) loadXlsx(() => parseFile(f));
+  });
+  fileInput.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) loadXlsx(() => parseFile(f));
+  });
+
+  function parseFile(file) {
+    const errEl = document.getElementById('imp-parse-err');
+    errEl.style.display = 'none';
+    const reader = new FileReader();
+    reader.onerror = () => { errEl.textContent = 'Gagal membaca file.'; errEl.style.display = ''; };
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rawRows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        if (!rawRows.length) throw new Error('File kosong');
+        buildStep2();
+        setStep(2);
+      } catch(err) {
+        errEl.textContent = 'Gagal memproses file: ' + err.message;
+        errEl.style.display = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ── STEP 2 ──
+  function buildStep2() {
+    const hasHeader = document.getElementById('imp-has-header').checked;
+    const headerRow = hasHeader ? rawRows[0] : null;
+    const sampleRows = rawRows.slice(hasHeader ? 1 : 0, hasHeader ? 4 : 3);
+    const numCols = rawRows[0].length;
+
+    colMap = {};
+    const wrap = document.getElementById('imp-col-wrap');
+    wrap.innerHTML = '';
+
+    for (let i = 0; i < numCols; i++) {
+      const colName = headerRow ? String(headerRow[i] || '').trim() || ('Kolom '+(i+1)) : 'Kolom '+(i+1);
+      const lc = colName.toLowerCase();
+      let def = 'skip';
+      if (/nama|name/.test(lc)) def = 'nama';
+      else if (/email|surel|e-mail/.test(lc)) def = 'email';
+      else if (/hp|telp|telepon|phone|ponsel|no\.?\s*hp|nomor/.test(lc)) def = 'hp';
+      colMap[i] = def;
+
+      const samples = sampleRows.map(r => String(r[i]||'').trim()).filter(Boolean).slice(0,3);
+
+      const card = document.createElement('div');
+      card.className = 'imp-col-card' + (def !== 'skip' ? ' mapped-'+def : '');
+      card.dataset.idx = i;
+      card.innerHTML = `
+        <div class="imp-col-card-name" title="${colName}">${colName}</div>
+        <div class="imp-col-samples">${samples.map(s=>`<span>${s.slice(0,40)}</span>`).join('') || '<span style="color:var(--c-border)">—</span>'}</div>
+        <select class="imp-col-select">
+          <option value="skip">Abaikan</option>
+          <option value="nama"${def==='nama'?' selected':''}>Nama</option>
+          <option value="email"${def==='email'?' selected':''}>Email</option>
+          <option value="hp"${def==='hp'?' selected':''}>No. HP</option>
+        </select>`;
+      wrap.appendChild(card);
+    }
+
+    wrap.querySelectorAll('select').forEach(sel => {
+      sel.addEventListener('change', e => {
+        const idx = parseInt(e.target.closest('.imp-col-card').dataset.idx);
+        const val = e.target.value;
+        // Enforce uniqueness for nama/email
+        if (val !== 'skip') {
+          wrap.querySelectorAll('.imp-col-card').forEach(card => {
+            const ci = parseInt(card.dataset.idx);
+            if (ci !== idx && colMap[ci] === val) {
+              colMap[ci] = 'skip';
+              card.querySelector('select').value = 'skip';
+              card.className = 'imp-col-card';
+            }
+          });
+        }
+        colMap[idx] = val;
+        e.target.closest('.imp-col-card').className = 'imp-col-card' + (val !== 'skip' ? ' mapped-'+val : '');
+        updateStep2Btn();
+      });
+    });
+    updateStep2Btn();
+  }
+
+  document.getElementById('imp-has-header').addEventListener('change', () => {
+    if (rawRows.length) buildStep2();
+  });
+
+  function updateStep2Btn() {
+    const vals = Object.values(colMap);
+    const ok = vals.includes('nama') || vals.includes('email');
+    btnNext2.disabled = !ok;
+    const errEl = document.getElementById('imp-s2-err');
+    errEl.style.display = ok ? 'none' : '';
+    if (!ok) errEl.textContent = 'Pilih minimal satu kolom (Nama atau Email).';
+  }
+
+  btnNext2.addEventListener('click', () => {
+    buildImportRows();
+    renderStep3();
+    setStep(3);
+  });
+
+  // ── STEP 3 ──
+  function buildImportRows() {
+    const hasHeader = document.getElementById('imp-has-header').checked;
+    const namaIdx  = Object.keys(colMap).find(k => colMap[k] === 'nama');
+    const emailIdx = Object.keys(colMap).find(k => colMap[k] === 'email');
+    const hpIdx    = Object.keys(colMap).find(k => colMap[k] === 'hp');
+    const dataRows = rawRows.slice(hasHeader ? 1 : 0);
+
+    importRows = dataRows
+      .filter(row => row.some(v => String(v).trim()))
+      .map(row => ({
+        nama:  namaIdx  !== undefined ? String(row[namaIdx]  || '').trim() : '',
+        email: emailIdx !== undefined ? String(row[emailIdx] || '').trim().toLowerCase() : '',
+        hp:    hpIdx    !== undefined ? String(row[hpIdx]    || '').trim() : '',
+        role:  'peserta',
+        selected: true,
+      }));
+  }
+
+  function renderStep3() {
+    const tbody = document.getElementById('imp-tbody');
+    tbody.innerHTML = '';
+    importRows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:center"><input type="checkbox" class="imp-row-chk"${row.selected?' checked':''} style="width:auto"></td>
+        <td style="font-size:13px">${row.nama  || '<span class="meta">—</span>'}</td>
+        <td style="font-size:13px">${row.email || '<span class="meta">—</span>'}</td>
+        <td style="font-size:13px">${row.hp    || '<span class="meta">—</span>'}</td>
+        <td>
+          <select class="imp-row-role" style="font-size:12px;padding:4px 6px;border:1px solid var(--c-border);border-radius:4px;background:var(--c-bg-card);width:100%">
+            ${ROLES.map(([v,l])=>`<option value="${v}"${v==='peserta'?' selected':''}>${l}</option>`).join('')}
+          </select>
+        </td>`;
+      tr.querySelector('.imp-row-chk').addEventListener('change', e => {
+        importRows[i].selected = e.target.checked;
+        updateStep3();
+      });
+      tr.querySelector('.imp-row-role').addEventListener('change', e => {
+        importRows[i].role = e.target.value;
+      });
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('imp-check-all').checked = true;
+    updateStep3();
+  }
+
+  function updateStep3() {
+    const sel = importRows.filter(r => r.selected).length;
+    document.getElementById('imp-sel-count').textContent = sel + ' dari ' + importRows.length + ' baris dipilih';
+    btnNext3.disabled = sel === 0;
+    btnNext3.textContent = sel > 0 ? 'Import ' + sel + ' peserta' : 'Import';
+  }
+
+  document.getElementById('imp-check-all').addEventListener('change', e => {
+    importRows.forEach(r => r.selected = e.target.checked);
+    document.querySelectorAll('.imp-row-chk').forEach(c => c.checked = e.target.checked);
+    updateStep3();
+  });
+
+  document.getElementById('imp-toggle-all').addEventListener('click', () => {
+    const allOn = importRows.every(r => r.selected);
+    importRows.forEach(r => r.selected = !allOn);
+    document.querySelectorAll('.imp-row-chk').forEach(c => c.checked = !allOn);
+    document.getElementById('imp-check-all').checked = !allOn;
+    updateStep3();
+  });
+
+  document.getElementById('imp-apply-role').addEventListener('click', () => {
+    const role = document.getElementById('imp-bulk-role').value;
+    importRows.forEach(r => r.role = role);
+    document.querySelectorAll('.imp-row-role').forEach(sel => sel.value = role);
+  });
+
+  // ── SUBMIT ──
+  btnNext3.addEventListener('click', () => {
+    const rows = importRows.filter(r => r.selected);
+    if (!rows.length) return;
+    btnNext3.disabled = true;
+    btnNext3.textContent = 'Mengimpor…';
+
+    fetch("{% url 'admin_kegiatan_import' kegiatan.kode %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({rows}),
+    })
+    .then(r => r.json())
+    .then(data => {
+      showResult(data);
+      setStep(4);
+    })
+    .catch(() => {
+      btnNext3.disabled = false;
+      btnNext3.textContent = 'Import ' + rows.length + ' peserta';
+      alert('Terjadi kesalahan. Silakan coba lagi.');
+    });
+  });
+
+  function showResult(data) {
+    const iconEl  = document.getElementById('imp-result-icon');
+    const titleEl = document.getElementById('imp-result-title');
+    const bodyEl  = document.getElementById('imp-result-body');
+    const ok = data.ok && data.imported > 0;
+
+    iconEl.innerHTML = ok
+      ? '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--c-success)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>'
+      : '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--c-text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+    titleEl.textContent = data.imported > 0
+      ? data.imported + ' peserta berhasil diimpor'
+      : 'Tidak ada peserta baru yang diimpor';
+
+    let lines = [];
+    if (data.skipped_duplicate > 0)
+      lines.push(data.skipped_duplicate + ' sudah terdaftar di kegiatan ini (dilewati)');
+    if (data.skipped_no_data > 0)
+      lines.push(data.skipped_no_data + ' baris tidak memiliki email (dilewati)');
+    bodyEl.innerHTML = lines.join('<br>');
+  }
+
+  btnDone.addEventListener('click', () => {
+    closeModal();
+    window.location.reload();
+  });
+
+})();
+</script>
+
+<style>
+  @media (max-width:640px) {
+    .detail-key { width:100px; }
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "directory/base.html" %}
+{% block title %}{{ komunitas.nama_komunitas }} — Komunitas{% endblock %}
+
+{% block head %}
+<style>
+  .detail-header { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+  .detail-logo {
+    width: 72px; height: 72px; border-radius: 14px;
+    object-fit: contain; border: 1px solid var(--c-border);
+    background: var(--c-bg-subtle); padding: 6px; flex-shrink: 0;
+  }
+  .detail-logo-fallback {
+    width: 72px; height: 72px; border-radius: 14px;
+    background: var(--c-primary); color: #fff;
+    font-size: 24px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .member-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--c-border);
+  }
+  .member-row:last-child { border-bottom: none; }
+  .member-av {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--c-primary); color: #fff;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+<a href="{% url 'komunitas_list' %}" class="breadcrumb">&larr; Komunitas</a>
+
+{# ── Header ── #}
+<div class="card" style="margin-bottom:20px">
+  <div class="detail-header">
+    {% if komunitas.logo %}
+      <img src="{{ komunitas.logo }}" alt="{{ komunitas.nama_komunitas }}" class="detail-logo">
+    {% else %}
+      <div class="detail-logo-fallback">{{ komunitas.nama_komunitas|first|upper }}</div>
+    {% endif %}
+    <div style="flex:1;min-width:180px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <h1 class="page-title" style="font-size:20px">{{ komunitas.nama_komunitas }}</h1>
+        {% if komunitas.jenis_komunitas %}
+          <span class="jenis-badge jenis-{{ komunitas.jenis_komunitas }}">{{ komunitas.jenis_label }}</span>
+        {% endif %}
+      </div>
+      {% if komunitas.deskripsi %}
+        <p style="font-size:14px;color:var(--c-text-secondary);line-height:1.6;max-width:600px">{{ komunitas.deskripsi }}</p>
+      {% endif %}
+      {% if komunitas.pranala_informasi %}
+      <div style="margin-top:12px">
+        <a href="{{ komunitas.pranala_informasi }}" target="_blank" rel="noopener"
+           style="font-size:13px;display:inline-flex;align-items:center;gap:5px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Halaman komunitas
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# ── Statistik ringkas ── #}
+<div class="card" style="margin-bottom:20px">
+  <p class="section-label">Statistik</p>
+  <div style="display:flex;gap:24px;flex-wrap:wrap">
+    <div class="stat-card" style="flex:1;min-width:120px">
+      <div class="stat-number c-primary">{{ anggota_qs|length }}</div>
+      <div class="stat-label">Anggota terdaftar</div>
+    </div>
+    <div class="stat-card" style="flex:1;min-width:120px">
+      <div class="stat-number c-primary">{{ kegiatan_qs|length }}</div>
+      <div class="stat-label">Kegiatan tercatat</div>
+    </div>
+  </div>
+</div>
+
+{# ── Anggota ── #}
+<div class="card" style="margin-bottom:20px">
+  <p class="section-label">Anggota <span style="font-weight:400;color:var(--c-text-muted)">({{ anggota_qs|length }})</span></p>
+
+  {% if anggota_qs %}
+  <div>
+    {% if komunitas.narahubung %}
+    <div class="member-row">
+      <div class="member-av">{{ komunitas.narahubung.display_label|first|upper }}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px">
+          {{ komunitas.narahubung.display_label }}
+          <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--c-primary-light);color:var(--c-primary)">Narahubung</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% for ka in anggota_qs %}
+    {% if ka.member != komunitas.narahubung %}
+    <div class="member-row">
+      <div class="member-av">{{ ka.member.display_label|first|upper }}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">{{ ka.member.display_label }}</div>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="meta">Belum ada anggota.</p>
+  {% endif %}
+</div>
+
+{# ── Riwayat kegiatan ── #}
+<div class="card">
+  <p class="section-label">Kegiatan terkait <span style="font-weight:400;color:var(--c-text-muted)">({{ kegiatan_qs|length }})</span></p>
+
+  {% if kegiatan_qs %}
+  <div>
+    {% for kg in kegiatan_qs %}
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--c-border)">
+      <div style="flex-shrink:0;text-align:center;min-width:40px">
+        <div style="font-size:18px;font-weight:700;line-height:1;color:var(--c-primary)">{{ kg.tanggal_mulai|date:"d" }}</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--c-text-muted)">{{ kg.tanggal_mulai|date:"M Y" }}</div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <a href="{% url 'kegiatan_detail' kg.kode %}" style="font-size:13px;font-weight:600;color:var(--c-text)">{{ kg.judul }}</a>
+        <div style="font-size:11px;color:var(--c-text-muted);margin-top:3px">
+          {% if kg.lokasi %}{{ kg.lokasi }}{% endif %}
+          {% if kg.lokasi and kg.tanggal_selesai and kg.tanggal_selesai != kg.tanggal_mulai %} &middot; {% endif %}
+          {% if kg.tanggal_selesai and kg.tanggal_selesai.date != kg.tanggal_mulai.date %}s/d {{ kg.tanggal_selesai|date:"d M Y" }}{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="meta">Belum ada kegiatan tercatat untuk komunitas ini.</p>
+  {% endif %}
+</div>
+
+</div>
+{% endblock %}

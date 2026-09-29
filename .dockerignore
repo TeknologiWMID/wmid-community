@@ -1,0 +1,12 @@
+.env
+.git
+.claude
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.sqlite3
+staticfiles/
+.gitignore
+README.md
+CLAUDE.md

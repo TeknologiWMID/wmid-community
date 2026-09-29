@@ -1,0 +1,425 @@
+{% extends "directory/base.html" %}
+{% block title %}Profil — {{ member.display_label }}{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Page layout ───────────────────────────────────────────── */
+  .profile-meta-row {
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .profile-info-row {
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-header .section-label { margin-bottom: 0; }
+
+  /* ── Availability badge (read-only display) ────────────────── */
+  .avail-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500;
+    padding: 3px 10px; border-radius: 99px; border: 1px solid;
+  }
+  .avail-badge-aktif   { color: var(--c-success); background: var(--c-success-light); border-color: #a7d7b8; }
+  .avail-badge-sibuk   { color: var(--c-danger);  background: var(--c-danger-light);  border-color: #fca5a5; }
+  .avail-badge-tidak-aktif { color: #92400e; background: var(--c-warn-light); border-color: #fde68a; }
+
+  /* ── Skills ────────────────────────────────────────────────── */
+  .skills-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .skill-tag {
+    font-size: 12px; padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--c-bg-subtle); border: 1px solid var(--c-border);
+    color: var(--c-text-secondary);
+  }
+
+  /* ── Komunitas chips ───────────────────────────────────────── */
+  .komunitas-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .komunitas-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--c-border); border-radius: var(--radius-sm);
+    background: var(--c-bg-subtle);
+    font-size: 13px; text-decoration: none; color: inherit;
+    transition: border-color .12s;
+  }
+  .komunitas-chip:hover { border-color: var(--c-primary); color: inherit; }
+  .komunitas-chip-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--c-primary); color: #fff;
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .komunitas-chip-logo {
+    width: 28px; height: 28px; border-radius: 50%; object-fit: contain;
+    border: 1px solid var(--c-border); padding: 2px;
+    background: #fff; flex-shrink: 0;
+  }
+
+  /* ── Kontribusi wiki grid ──────────────────────────────────── */
+  .contrib-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; align-items: stretch; margin-top: 16px;
+  }
+  .contrib-grid .card { margin: 0; display: flex; flex-direction: column; }
+  .contrib-scroll { overflow-y: auto; max-height: 300px; }
+  @media (max-width: 640px) {
+    .contrib-grid { grid-template-columns: 1fr; }
+    .contrib-scroll { max-height: 220px; }
+  }
+
+  /* ── Completion card ──────────────────────────────────────────── */
+  .completion-card { margin-bottom: 16px; border-left: 3px solid var(--c-primary); }
+  .completion-items { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .completion-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600; padding: 5px 12px;
+    border-radius: var(--radius-sm); border: 1px solid var(--c-border);
+    background: var(--c-bg-card); color: var(--c-text-secondary);
+    text-decoration: none; transition: border-color .1s, color .1s;
+  }
+  .completion-link:hover { border-color: var(--c-primary); color: var(--c-primary); }
+
+  /* ── Pending badge ─────────────────────────────────────────────── */
+  .badge-pending {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 99px;
+    background: var(--c-warn-light); color: #92400e;
+    letter-spacing: .02em; white-space: nowrap;
+    border: 1px solid #fde68a;
+  }
+  .dot-pending { background: #d1d5db; }
+
+  /* ── Role badge + dot ──────────────────────────────────────── */
+  .role-badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 99px;
+    letter-spacing: .02em; white-space: nowrap;
+  }
+  .role-peserta          { background: var(--c-bg-subtle);  color: var(--c-text-secondary); }
+  .role-pelatih          { background: #dbeafe; color: #1d4ed8; }
+  .role-panitia          { background: #ccfbf1; color: #0f766e; }
+  .role-juri             { background: #ffedd5; color: #c2410c; }
+  .role-penanggung-jawab { background: #ede9fe; color: #6d28d9; }
+  .role-narasumber       { background: var(--c-warn-light); color: #92400e; }
+  .role-lainnya          { background: var(--c-bg-subtle);  color: var(--c-text-secondary); }
+
+  /* ── Timeline ──────────────────────────────────────────────── */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: ''; position: absolute;
+    left: 7px; top: 8px; bottom: 8px;
+    width: 1px; background: var(--c-border);
+  }
+  .timeline-item {
+    position: relative; display: flex;
+    align-items: flex-start; justify-content: space-between;
+    gap: 12px; padding: 10px 0;
+  }
+  .timeline-item + .timeline-item { border-top: 1px solid var(--c-border); }
+  .timeline-dot {
+    position: absolute; left: -20px; top: 14px;
+    width: 9px; height: 9px; border-radius: 50%;
+    border: 2px solid var(--c-bg-card);
+    box-shadow: 0 0 0 1px var(--c-border); flex-shrink: 0;
+  }
+  .dot-peserta          { background: #9ca3af; }
+  .dot-pelatih          { background: #3b82f6; }
+  .dot-panitia          { background: #0d9488; }
+  .dot-juri             { background: #ea580c; }
+  .dot-penanggung-jawab { background: #7c3aed; }
+  .dot-narasumber       { background: #d97706; }
+  .dot-lainnya          { background: #9ca3af; }
+  .timeline-name  { font-size: 13px; font-weight: 600; line-height: 1.4; }
+  .timeline-sub   { font-size: 12px; color: var(--c-text-muted); margin-top: 2px; }
+  .timeline-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+
+  /* ── Sync result notice ────────────────────────────────────── */
+  .sync-notice {
+    background: var(--c-bg-card); border: 1px solid var(--c-border);
+    border-left: 3px solid var(--c-success);
+    border-radius: var(--radius); padding: 12px 16px;
+    font-size: 13px; margin-bottom: 16px;
+    box-shadow: var(--shadow-card);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+{# ── Header profil ─────────────────────────────────────────────────────────── #}
+<div class="card" style="margin-bottom:16px">
+  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div class="avatar">{{ member.display_label|first|upper }}</div>
+
+    <div style="flex:1;min-width:160px">
+      <div class="profile-meta-row" style="margin-bottom:5px">
+        <span style="font-size:17px;font-weight:700;letter-spacing:-.01em">{{ member.display_label }}</span>
+        {% if member.wikimedia_username and member.wiki_verified %}
+          <span class="meta">{{ member.wikimedia_username }}</span>
+        {% endif %}
+        {% if member.role == 'admin' %}<span class="badge badge-admin">Admin</span>{% endif %}
+        {% if member.availability == 'sibuk' %}
+          <span class="avail-badge avail-badge-sibuk"><span class="avail-dot avail-dot-sibuk"></span>Sibuk</span>
+        {% elif member.availability == 'tidak_aktif' %}
+          <span class="avail-badge avail-badge-tidak-aktif"><span class="avail-dot avail-dot-tidak-aktif"></span>Tidak aktif</span>
+        {% else %}
+          <span class="avail-badge avail-badge-aktif"><span class="avail-dot avail-dot-aktif"></span>Aktif</span>
+        {% endif %}
+      </div>
+      <div class="profile-info-row">
+        {% if member.location %}
+        <span class="meta" style="display:inline-flex;align-items:center;gap:4px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          {{ member.location }}
+        </span>
+        {% endif %}
+        {% if member.email %}
+        <span class="meta" style="display:inline-flex;align-items:center;gap:4px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          {{ member.email }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <a href="{% url 'profile_edit' %}" class="btn btn-primary btn-sm">Edit profil</a>
+      {% if member.wiki_verified %}
+        <a href="{% url 'resync' %}" class="btn btn-secondary btn-sm">Sinkronkan</a>
+      {% else %}
+        <a href="{% url 'oauth_login' %}" class="btn btn-secondary btn-sm">Hubungkan Wikimedia</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# ── Card kelengkapan profil ───────────────────────────────────────────────── #}
+{% if incomplete %}
+<div class="card completion-card">
+  <p class="section-label" style="margin-bottom:4px">Lengkapi profil</p>
+  <p class="meta">Beberapa informasi belum diisi. Profilmu akan lebih mudah ditemukan pengurus.</p>
+  <div class="completion-items">
+    {% for item in incomplete %}
+    <a href="{{ item.url }}" class="completion-link">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      {{ item.text }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# ── Notif sync ────────────────────────────────────────────────────────────── #}
+{% if sync_result %}
+<div class="sync-notice">
+  <strong>Sinkronisasi selesai:</strong>
+  {{ sync_result.saved }} kontribusi dari {{ sync_result.wikis_synced }}/{{ sync_result.wikis_found }} wiki.
+  {% if sync_result.fallback %}<span style="color:var(--c-accent)"> (CentralAuth kosong, dicek satu per satu)</span>{% endif %}
+  {% if sync_result.errors %}
+  <details style="margin-top:6px">
+    <summary style="cursor:pointer;color:var(--c-text-muted);font-size:12px">{{ sync_result.errors|length }} wiki gagal</summary>
+    <ul style="margin-top:6px;font-size:12px;color:var(--c-text-muted);padding-left:16px">
+      {% for e in sync_result.errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ── Bio + Skills + kontak ─────────────────────────────────────────────────── #}
+{% if member.bio or skills_list or member.phone %}
+<div class="card" style="margin-bottom:16px">
+  {% if member.bio %}
+  <p class="section-label">Bio singkat</p>
+  <p style="font-size:13px;line-height:1.7;color:var(--c-text-secondary);margin-bottom:0">{{ member.bio }}</p>
+  {% if skills_list or member.phone %}<div style="height:1px;background:var(--c-border);margin:16px 0"></div>{% endif %}
+  {% endif %}
+  {% if skills_list or member.phone %}
+  <div style="display:flex;gap:32px;flex-wrap:wrap">
+    {% if skills_list %}
+    <div style="flex:1;min-width:180px">
+      <p class="section-label">Keahlian</p>
+      <div class="skills-list">
+        {% for skill in skills_list %}<span class="skill-tag">{{ skill }}</span>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if member.phone %}
+    <div>
+      <p class="section-label">Nomor HP/WA</p>
+      <p style="font-size:14px">{{ member.phone }}</p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ── Riwayat kegiatan ──────────────────────────────────────────────────────── #}
+<div class="card" style="margin-top:16px">
+  <div class="card-header">
+    <p class="section-label">Riwayat kegiatan</p>
+    <a href="{% url 'riwayat_catat' %}" class="btn btn-secondary btn-sm">+ Catat kegiatan</a>
+  </div>
+
+  {% if riwayat_kegiatan %}
+  <div class="timeline">
+    {% for entry in riwayat_kegiatan %}
+    <div class="timeline-item">
+      <span class="timeline-dot {% if entry.status == 'menunggu' %}dot-pending{% else %}dot-{{ entry.role_css }}{% endif %}"></span>
+      <div style="flex:1;min-width:0">
+        <div class="timeline-name">{{ entry.kegiatan.judul }}</div>
+        {% if entry.kegiatan.lokasi %}<div class="timeline-sub">{{ entry.kegiatan.lokasi }}</div>{% endif %}
+      </div>
+      <div class="timeline-right">
+        {% if entry.status == 'menunggu' %}
+          <form method="post" action="{% url 'riwayat_cancel' entry.pk %}" style="margin:0;display:inline-flex;align-items:center">
+            {% csrf_token %}
+            <button type="submit" title="Tarik permintaan ini"
+                    style="display:inline-flex;align-items:center;gap:4px;border:1px solid #f59e0b;background:#fef3c7;color:#92400e;border-radius:99px;padding:2px 8px 2px 10px;font-size:11px;font-weight:500;cursor:pointer;line-height:1.4">
+              Menunggu verifikasi <span style="font-size:13px;line-height:1;color:#b45309">&times;</span>
+            </button>
+          </form>
+        {% else %}
+          <span class="role-badge role-{{ entry.role_css }}">{{ entry.get_role_display }}</span>
+        {% endif %}
+        <span class="meta">{{ entry.kegiatan.tanggal_mulai|date:"M Y" }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:24px 0">
+    <p class="meta">Belum ada riwayat kegiatan.</p>
+    <a href="{% url 'riwayat_catat' %}" class="btn btn-secondary btn-sm" style="margin-top:10px">Catat kegiatan pertama</a>
+  </div>
+  {% endif %}
+</div>
+
+{# ── Komunitas ─────────────────────────────────────────────────────────────── #}
+<div class="card" style="margin-top:16px">
+  <div class="card-header">
+    <p class="section-label">Komunitas</p>
+    <a href="{% url 'profile_edit' %}#komunitas" class="btn btn-ghost btn-sm">+ Bergabung</a>
+  </div>
+  {% if my_komunitas %}
+  <div class="komunitas-grid">
+    {% for ka in my_komunitas %}
+    <a href="{% url 'komunitas_detail' ka.komunitas.slug %}" class="komunitas-chip">
+      {% if ka.komunitas.logo %}
+        <img src="{{ ka.komunitas.logo }}" class="komunitas-chip-logo" alt="">
+      {% else %}
+        <div class="komunitas-chip-icon">{{ ka.komunitas.nama_komunitas|first|upper }}</div>
+      {% endif %}
+      <span style="font-weight:600;font-size:13px">{{ ka.komunitas.nama_komunitas }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="meta">Belum bergabung dengan komunitas mana pun.
+    <a href="{% url 'profile_edit' %}#komunitas">Bergabung sekarang</a>
+  </p>
+  {% endif %}
+</div>
+
+{# ── Kontribusi wiki ───────────────────────────────────────────────────────── #}
+<div class="card" style="margin-top:16px">
+  <p class="section-label">Kontribusi wiki</p>
+
+  {% if not member.wiki_verified %}
+  <div style="padding:8px 0 4px;display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+    <p style="font-size:14px;color:var(--c-text-secondary);line-height:1.6;max-width:440px">
+      Hubungkan akun Wikimedia untuk menarik riwayat kontribusimu dari semua proyek Wikimedia.
+    </p>
+    <a href="{% url 'oauth_login' %}" class="btn btn-primary">Konfirmasi dengan Wikimedia</a>
+  </div>
+  {% else %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+    <div class="stat-card">
+      <div class="stat-number c-primary">{{ member.total_edits_fetched }}</div>
+      <div class="stat-label">Kontribusi tersimpan</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number c-success">{{ unique_pages }}</div>
+      <div class="stat-label">Halaman unik</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number c-default">{{ projects|length }}</div>
+      <div class="stat-label">Proyek aktif</div>
+    </div>
+    <div class="stat-card">
+      {% if net_bytes >= 0 %}
+        <div class="stat-number c-success">+{{ net_bytes|floatformat:0 }}</div>
+      {% else %}
+        <div class="stat-number c-danger">{{ net_bytes|floatformat:0 }}</div>
+      {% endif %}
+      <div class="stat-label">Net byte</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if projects or recent %}
+<div class="contrib-grid" style="margin-top:16px">
+  {% if projects %}
+  <div class="card">
+    <p class="section-label">Per proyek</p>
+    <div class="contrib-scroll">
+      <table>
+        <thead><tr><th>Proyek</th><th style="text-align:right">Edit</th></tr></thead>
+        <tbody>
+          {% for p in projects %}
+          <tr>
+            <td>{{ p.project }}</td>
+            <td style="text-align:right;font-variant-numeric:tabular-nums">{{ p.count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <p class="section-label">10 kontribusi terbaru</p>
+    {% if recent %}
+    <div class="contrib-scroll" style="overflow-x:auto">
+      <table style="min-width:280px">
+        <thead>
+          <tr><th>Waktu</th><th>Halaman</th><th style="text-align:right">Byte</th></tr>
+        </thead>
+        <tbody>
+          {% for c in recent %}
+          <tr>
+            <td style="white-space:nowrap;color:var(--c-text-muted)">{{ c.timestamp|date:"d M Y" }}</td>
+            <td>
+              <a href="https://{{ c.project }}/wiki/{{ c.title|urlencode }}" target="_blank" rel="noopener">
+                {{ c.title|truncatechars:30 }}
+              </a>
+            </td>
+            <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">
+              {% if c.sizediff > 0 %}<span style="color:var(--c-success)">+{{ c.sizediff }}</span>
+              {% elif c.sizediff < 0 %}<span style="color:var(--c-danger)">{{ c.sizediff }}</span>
+              {% else %}<span class="meta">0</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p>Belum ada kontribusi tersimpan.</p>
+      <p style="margin-top:6px"><a href="{% url 'resync' %}">Sinkronkan sekarang</a></p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

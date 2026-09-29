@@ -1,0 +1,70 @@
+{% extends "directory/base.html" %}
+{% block title %}{{ kegiatan.judul }} — Kegiatan{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <a href="{% url 'kegiatan_list' %}" class="breadcrumb">&larr; Kegiatan</a>
+
+  <div class="card">
+    <div style="margin-bottom:10px">
+      <span class="section-label" style="margin-bottom:0">{{ kegiatan.kode }}</span>
+    </div>
+    <h1 style="font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:14px">{{ kegiatan.judul }}</h1>
+
+    <table style="width:100%">
+      <tbody>
+        <tr>
+          <th style="width:110px;padding:6px 0;vertical-align:top">Tanggal</th>
+          <td style="padding:6px 0">
+            {% if kegiatan.tanggal_mulai|date:"d M Y" == kegiatan.tanggal_selesai|date:"d M Y" %}
+              {{ kegiatan.tanggal_mulai|date:"d M Y" }}, {{ kegiatan.tanggal_mulai|date:"H:i" }}–{{ kegiatan.tanggal_selesai|date:"H:i" }}
+            {% else %}
+              {{ kegiatan.tanggal_mulai|date:"d M Y" }} – {{ kegiatan.tanggal_selesai|date:"d M Y" }}
+            {% endif %}
+          </td>
+        </tr>
+        {% if kegiatan.lokasi %}
+        <tr>
+          <th style="padding:6px 0;vertical-align:top">Lokasi</th>
+          <td style="padding:6px 0">{{ kegiatan.lokasi }}</td>
+        </tr>
+        {% endif %}
+        {% if kegiatan.komunitas.exists %}
+        <tr>
+          <th style="padding:6px 0;vertical-align:top">Komunitas</th>
+          <td style="padding:6px 0">
+            {% for k in kegiatan.komunitas.all %}
+              <a href="{% url 'komunitas_detail' k.slug %}">{{ k.nama_komunitas }}</a>{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    {% if kegiatan.deskripsi %}
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--c-border);font-size:13px;line-height:1.7;color:var(--c-text-secondary)">
+      {{ kegiatan.deskripsi|linebreaksbr }}
+    </div>
+    {% endif %}
+
+    {% if kegiatan.links.exists %}
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--c-border)">
+      <p class="section-label" style="margin-bottom:8px">Tautan</p>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        {% for link in kegiatan.links.all %}
+        <a href="{{ link.url }}" target="_blank" rel="noopener"
+           style="font-size:13px;display:inline-flex;align-items:center;gap:5px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          {{ link.judul_link }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

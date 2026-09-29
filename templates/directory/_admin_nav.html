@@ -1,0 +1,98 @@
+<style>
+  .admin-nav-card {
+    background: var(--c-bg-card);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    gap: 4px;
+    padding: 6px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .admin-nav-card::-webkit-scrollbar { display: none; }
+  .anav-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500;
+    color: var(--c-text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .12s, color .12s;
+    flex-shrink: 0;
+  }
+  .anav-link:hover { background: var(--c-bg); color: var(--c-text); }
+  .anav-link.is-active {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    font-weight: 600;
+  }
+  .anav-badge {
+    background: var(--c-accent); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 1px 6px;
+    border-radius: 99px; line-height: 1.6;
+  }
+
+  /* Filter form */
+  .filter-form { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:flex-end; }
+  .filter-form input[type="search"] { max-width:220px; flex:1; min-width:140px; }
+  .filter-form select { width:auto; flex-shrink:0; }
+
+  /* Pagination */
+  .pagination-wrap {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:20px; flex-wrap:wrap; gap:12px;
+    padding-top:16px; border-top:1px solid var(--c-border);
+  }
+  .pagination-info { font-size:12px; color:var(--c-text-muted); }
+  .pagination { display:flex; gap:3px; flex-wrap:wrap; align-items:center; }
+  .page-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:32px; height:32px; padding:0 8px;
+    border-radius:var(--radius-sm); font-size:13px; font-weight:500;
+    text-decoration:none; border:1px solid var(--c-border);
+    background:var(--c-bg-card); color:var(--c-text-secondary);
+    transition:background .1s, color .1s, border-color .1s; font-family:var(--font);
+  }
+  .page-btn:hover { background:var(--c-bg); color:var(--c-text); border-color:#C4BEB8; }
+  .page-btn.is-active { background:var(--c-primary); color:#fff; border-color:var(--c-primary); }
+  .page-btn.is-disabled { opacity:.4; pointer-events:none; }
+  .page-btn.is-ellipsis { border:none; background:none; pointer-events:none; min-width:20px; padding:0; color:var(--c-text-muted); }
+
+  .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+  @media (max-width:640px) {
+    .filter-form { flex-direction:column; }
+    .filter-form input, .filter-form select, .filter-form .btn { width:100%; max-width:100%; }
+    .pagination-wrap { flex-direction:column; align-items:flex-start; }
+  }
+</style>
+
+<script>
+function adminSearch(form, delay) {
+  clearTimeout(form._t);
+  form._t = setTimeout(function() { form.submit(); }, delay || 450);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var q = document.querySelector('input[name="q"]');
+  if (q && q.value) {
+    q.focus();
+    var v = q.value;
+    q.value = '';
+    q.value = v;
+  }
+});
+</script>
+
+<nav class="admin-nav-card" aria-label="Navigasi admin">
+  <a href="{% url 'admin_dashboard' %}" class="anav-link {% if active_admin == 'dashboard' %}is-active{% endif %}">Ringkasan</a>
+  <a href="{% url 'admin_anggota' %}" class="anav-link {% if active_admin == 'anggota' %}is-active{% endif %}">Anggota</a>
+  <a href="{% url 'admin_komunitas' %}" class="anav-link {% if active_admin == 'komunitas' %}is-active{% endif %}">Komunitas</a>
+  <a href="{% url 'admin_kegiatan_data' %}" class="anav-link {% if active_admin == 'kegiatan' %}is-active{% endif %}">Kegiatan</a>
+  <a href="{% url 'admin_verifikasi' %}" class="anav-link {% if active_admin == 'verifikasi' %}is-active{% endif %}">
+    Verifikasi Data{% if pending_count %}&nbsp;<span class="anav-badge">{{ pending_count }}</span>{% endif %}
+  </a>
+</nav>

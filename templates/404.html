@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Halaman tidak ditemukan — WMID</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --c-primary:       #2356A2;
+      --c-primary-dark:  #1A3F7A;
+      --c-primary-light: #EBF1FA;
+      --c-text:          #1A1A1A;
+      --c-text-secondary:#4A4A50;
+      --c-text-muted:    #757580;
+      --c-bg:            #F6F5F1;
+      --c-bg-card:       #FFFFFF;
+      --c-border:        #E2DFD8;
+      --radius:          8px;
+      --shadow-card:     0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--c-bg);
+      color: var(--c-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    nav {
+      background: var(--c-bg-card);
+      border-bottom: 1px solid var(--c-border);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-brand {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--c-primary);
+      text-decoration: none;
+      letter-spacing: -.02em;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .card {
+      background: var(--c-bg-card);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      padding: 48px 40px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .code {
+      font-size: 64px;
+      font-weight: 800;
+      color: var(--c-primary-light);
+      letter-spacing: -.04em;
+      line-height: 1;
+      margin-bottom: 16px;
+      user-select: none;
+    }
+
+    .code span {
+      color: var(--c-primary);
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 14px;
+      color: var(--c-text-secondary);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    a.btn {
+      display: inline-block;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background .15s;
+    }
+
+    .btn-primary {
+      background: var(--c-primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--c-primary-dark); color: #fff; }
+
+    .btn-secondary {
+      background: var(--c-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+    }
+    .btn-secondary:hover { background: var(--c-border); }
+
+    @media (max-width: 480px) {
+      .card { padding: 36px 24px; }
+      .code { font-size: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-brand">WMID Community</a>
+  </nav>
+  <main>
+    <div class="card">
+      <div class="code"><span>4</span>0<span>4</span></div>
+      <h1>Halaman tidak ditemukan</h1>
+      <p>Alamat <strong>{{ request.path }}</strong> tidak ada atau sudah dipindahkan.</p>
+      <div class="actions">
+        <a href="javascript:history.back()" class="btn btn-secondary">Kembali</a>
+        <a href="/" class="btn btn-primary">Ke beranda</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

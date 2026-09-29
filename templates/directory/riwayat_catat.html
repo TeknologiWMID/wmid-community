@@ -1,0 +1,378 @@
+{% extends "directory/base.html" %}
+{% block title %}Catat Kegiatan — Profil{% endblock %}
+
+{% block head %}
+<style>
+  .catat-card { max-width: 860px; }
+
+  .kegiatan-search-wrap { position: relative; }
+  .kegiatan-list-box {
+    display: none;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-bg-card);
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 4px;
+    box-shadow: var(--shadow-elevated);
+  }
+  .kegiatan-list-box.is-open { display: block; }
+  .kegiatan-option {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--c-bg-subtle);
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .kegiatan-option:last-child { border-bottom: none; }
+  .kegiatan-option:hover,
+  .kegiatan-option.is-focused { background: var(--c-bg-subtle); }
+  .kegiatan-option-title { font-size: 13px; font-weight: 600; line-height: 1.4; }
+  .kegiatan-option-meta  { font-size: 11px; color: var(--c-text-muted); margin-top: 2px; }
+
+  .selected-kegiatan {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--c-bg-subtle);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    margin-top: 6px;
+  }
+  .selected-kegiatan.is-visible { display: flex; }
+  .selected-kegiatan-info { flex: 1; min-width: 0; }
+  .selected-kegiatan-title { font-size: 13px; font-weight: 600; }
+  .selected-kegiatan-meta  { font-size: 11px; color: var(--c-text-muted); margin-top: 2px; }
+  .clear-selection-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--c-text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 4px;
+    line-height: 1;
+    border-radius: var(--radius-sm);
+  }
+  .clear-selection-btn:hover { color: var(--c-text); background: var(--c-bg); }
+
+  .manual-fields { }
+  .manual-fields.is-hidden { display: none; }
+
+  .section-divider {
+    height: 1px;
+    background: var(--c-border);
+    margin: 20px 0;
+  }
+
+
+  .komunitas-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .komunitas-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    padding: 3px 8px 3px 10px;
+    border-radius: 99px;
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    font-weight: 500;
+  }
+  .komunitas-chip button {
+    background: none;
+    border: none;
+    color: var(--c-primary);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    line-height: 1;
+    opacity: .7;
+  }
+  .komunitas-chip button:hover { opacity: 1; }
+  .komunitas-search-wrap { position: relative; }
+  .komunitas-dd {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--c-bg-card);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-elevated);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .komunitas-dd-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--c-bg-subtle);
+  }
+  .komunitas-dd-item:hover { background: var(--c-bg-subtle); }
+  .komunitas-dd-item:last-child { border-bottom: none; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+<a href="{% url 'profile' %}" class="breadcrumb">&larr; Profil</a>
+
+<h1 style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px">Catat kegiatan</h1>
+<p class="meta" style="margin-bottom:24px">Tambahkan riwayat kegiatan yang sudah kamu ikuti.</p>
+
+<div class="card catat-card">
+  <form method="post" action="{% url 'riwayat_catat' %}" id="form-catat">
+    {% csrf_token %}
+    <input type="hidden" name="kegiatan_id" id="field-kegiatan-id" value="">
+
+    {# ── Nama kegiatan ─────────────────────────────────────────────────────── #}
+    <div class="form-field" id="field-judul-wrap">
+      <label class="form-label" for="kegiatan-search-input">
+        Nama kegiatan <span style="color:var(--c-accent)">*</span>
+      </label>
+      <div class="kegiatan-search-wrap">
+        <input type="text" id="kegiatan-search-input" name="judul" required
+               autocomplete="off"
+               placeholder="Ketik nama kegiatan WMID atau kegiatan lainnya…">
+        <div class="kegiatan-list-box" id="kegiatan-list-box" role="listbox">
+          {# filled by JS #}
+        </div>
+      </div>
+      <div class="selected-kegiatan" id="selected-kegiatan-card">
+        <div class="selected-kegiatan-info">
+          <div class="selected-kegiatan-title" id="selected-kegiatan-title"></div>
+          <div class="selected-kegiatan-meta"  id="selected-kegiatan-meta"></div>
+        </div>
+        <button type="button" class="clear-selection-btn" id="clear-selection-btn" title="Batalkan pilihan">&#10005;</button>
+      </div>
+      <p class="form-hint">Kegiatan WMID resmi akan muncul saat mengetik. Pilih dari daftar, atau lanjutkan mengetik untuk mencatat kegiatan lainnya.</p>
+    </div>
+
+    {# ── Tanggal, Lokasi, Peran, Jenis ─────────────────────────────────────── #}
+    <div class="manual-fields" id="manual-fields">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div class="form-field">
+          <label class="form-label" for="tanggal_mulai">Tanggal mulai <span style="color:var(--c-accent)">*</span></label>
+          <input type="date" id="tanggal_mulai" name="tanggal_mulai" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="tanggal_selesai">Tanggal selesai</label>
+          <input type="date" id="tanggal_selesai" name="tanggal_selesai">
+          <p class="form-hint">Kosongkan jika sehari.</p>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="lokasi">Lokasi <span class="meta" style="font-weight:400">(opsional)</span></label>
+          <input type="text" id="lokasi" name="lokasi" maxlength="255" placeholder="Contoh: Jakarta / Daring">
+        </div>
+      </div>
+    </div>
+
+    {# ── Peran + Jenis dalam satu baris ────────────────────────────────────── #}
+    <div style="display:flex;gap:12px">
+      <div class="form-field" style="flex:1;margin-bottom:0">
+        <label class="form-label" for="role">Peranmu di kegiatan ini</label>
+        <select id="role" name="role">
+          {% for val, label in role_choices %}
+            <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="manual-fields" id="manual-fields-jenis" style="flex:1;margin:0">
+        <div class="form-field" style="margin-bottom:0">
+          <label class="form-label" for="jenis_kegiatan">Jenis kegiatan <span class="meta" style="font-weight:400">(opsional)</span></label>
+          <select id="jenis_kegiatan" name="jenis_kegiatan">
+            <option value="">— Pilih jenis —</option>
+            {% for val, label in jenis_choices %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {# ── Catatan ────────────────────────────────────────────────────────────── #}
+    <div class="form-field">
+      <label class="form-label" for="catatan">Keterangan <span class="meta" style="font-weight:400">(opsional)</span></label>
+      <input type="text" id="catatan" name="catatan" maxlength="200"
+             placeholder="Tautan laporan, halaman Meta, atau catatan lainnya">
+      <p class="form-hint">Maks. 200 karakter.</p>
+    </div>
+
+    {# ── Komunitas terkait ────────────────────────────────────────────────── #}
+    <div class="manual-fields" id="manual-fields-komunitas">
+      <div class="section-divider"></div>
+      <p style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c-text-muted);margin-bottom:6px">Komunitas terkait <span style="font-weight:400;text-transform:none;letter-spacing:0">(opsional)</span></p>
+      <div class="komunitas-chips" id="komunitas-chips"></div>
+      <div class="komunitas-search-wrap" id="komunitas-add-wrap">
+        <input type="text" id="komunitas-add-input" placeholder="Cari komunitas…"
+               style="width:100%;box-sizing:border-box" autocomplete="off">
+        <div class="komunitas-dd" id="komunitas-dd"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px">
+      <button type="submit" class="btn btn-primary">Kirim untuk diverifikasi</button>
+      <a href="{% url 'profile' %}" class="btn btn-secondary" style="margin-left:8px">Batal</a>
+    </div>
+  </form>
+</div>
+
+{# ── Data JSON ─────────────────────────────────────────────────────────────── #}
+<script type="application/json" id="wmid-kegiatan-data">
+[{% for k in wmid_kegiatan %}{"id":{{ k.pk }},"judul":"{{ k.judul|escapejs }}","tanggal":"{{ k.tanggal_mulai|date:'d M Y' }}","lokasi":"{{ k.lokasi|default:''|escapejs }}","type":"wmid"}{% if not forloop.last %},{% endif %}{% endfor %}]
+</script>
+<script type="application/json" id="other-kegiatan-data">
+[{% for k in other_kegiatan %}{"id":{{ k.pk }},"judul":"{{ k.judul|escapejs }}","tanggal":"{{ k.tanggal_mulai|date:'d M Y' }}","lokasi":"{{ k.lokasi|default:''|escapejs }}","type":"other"}{% if not forloop.last %},{% endif %}{% endfor %}]
+</script>
+<script type="application/json" id="komunitas-data">
+[{% for k in komunitas_all %}{"id":{{ k.pk }},"nama":"{{ k.nama_komunitas|escapejs }}","kode":"{{ k.kode|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+</script>
+<script>
+(function() {
+  /* ── Data ──────────────────────────────────────────────────────────────── */
+  const ALL_KOMUNITAS   = JSON.parse(document.getElementById('komunitas-data').textContent);
+  const WMID_KEGIATAN   = JSON.parse(document.getElementById('wmid-kegiatan-data').textContent);
+  const OTHER_KEGIATAN  = JSON.parse(document.getElementById('other-kegiatan-data').textContent);
+  const ALL_KEGIATAN    = [...WMID_KEGIATAN, ...OTHER_KEGIATAN];
+
+  /* ── Elements ──────────────────────────────────────────────────────────── */
+  const searchInput    = document.getElementById('kegiatan-search-input');
+  const listBox        = document.getElementById('kegiatan-list-box');
+  const selectedCard   = document.getElementById('selected-kegiatan-card');
+  const selectedTitle  = document.getElementById('selected-kegiatan-title');
+  const selectedMeta   = document.getElementById('selected-kegiatan-meta');
+  const clearBtn       = document.getElementById('clear-selection-btn');
+  const fieldKegiatanId= document.getElementById('field-kegiatan-id');
+  const manualFields   = document.getElementById('manual-fields');
+  const manualJenis    = document.getElementById('manual-fields-jenis');
+  const manualKomunitas= document.getElementById('manual-fields-komunitas');
+  const tanggalInput   = document.getElementById('tanggal_mulai');
+
+  let selectedKegiatanId = null;
+
+  /* ── Kegiatan search ───────────────────────────────────────────────────── */
+  function openList(items) {
+    if (!items.length) { listBox.classList.remove('is-open'); return; }
+    listBox.innerHTML = items.map(k => {
+      const meta = [k.tanggal, k.lokasi].filter(Boolean).join(' · ');
+      const badge = k.type === 'other'
+        ? `<span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;background:var(--c-bg);color:var(--c-text-muted);border:1px solid var(--c-border);margin-left:6px">Kegiatan lainnya</span>`
+        : ``;
+      return `<div class="kegiatan-option" role="option" data-id="${k.id}" tabindex="-1">
+        <div class="kegiatan-option-title">${k.judul}${badge}</div>
+        ${meta ? `<div class="kegiatan-option-meta">${meta}</div>` : ''}
+      </div>`;
+    }).join('');
+    listBox.querySelectorAll('.kegiatan-option').forEach(el => {
+      el.addEventListener('mousedown', e => { e.preventDefault(); selectKegiatan(parseInt(el.dataset.id)); });
+    });
+    listBox.classList.add('is-open');
+  }
+
+  function selectKegiatan(id) {
+    const k = ALL_KEGIATAN.find(x => x.id === id);
+    if (!k) return;
+    selectedKegiatanId      = id;
+    fieldKegiatanId.value   = id;
+    searchInput.value       = k.judul;
+    searchInput.readOnly    = true;
+    selectedTitle.textContent = k.judul;
+    selectedMeta.textContent  = [k.tanggal, k.lokasi].filter(Boolean).join(' · ');
+    selectedCard.classList.add('is-visible');
+    manualFields.classList.add('is-hidden');
+    manualJenis.classList.add('is-hidden');
+    manualKomunitas.classList.add('is-hidden');
+    tanggalInput.required   = false;
+    listBox.classList.remove('is-open');
+  }
+
+  function clearSelection() {
+    selectedKegiatanId      = null;
+    fieldKegiatanId.value   = '';
+    searchInput.value       = '';
+    searchInput.readOnly    = false;
+    selectedCard.classList.remove('is-visible');
+    manualFields.classList.remove('is-hidden');
+    manualJenis.classList.remove('is-hidden');
+    manualKomunitas.classList.remove('is-hidden');
+    tanggalInput.required   = true;
+    searchInput.focus();
+  }
+
+  clearBtn.addEventListener('click', clearSelection);
+
+  searchInput.addEventListener('input', () => {
+    if (searchInput.readOnly) return;
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) { listBox.classList.remove('is-open'); return; }
+    openList(ALL_KEGIATAN.filter(k => k.judul.toLowerCase().includes(q)).slice(0, 10));
+  });
+
+  searchInput.addEventListener('focus', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    if (q && !searchInput.readOnly) openList(ALL_KEGIATAN.filter(k => k.judul.toLowerCase().includes(q)).slice(0, 10));
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.kegiatan-search-wrap') && !e.target.closest('#selected-kegiatan-card'))
+      listBox.classList.remove('is-open');
+  });
+
+  /* ── Komunitas search ──────────────────────────────────────────────────── */
+  const komInput    = document.getElementById('komunitas-add-input');
+  const komDropdown = document.getElementById('komunitas-dd');
+  const komChips    = document.getElementById('komunitas-chips');
+  const addedKomIds = new Set();
+
+  function addKomChip(k) {
+    if (addedKomIds.has(k.id)) return;
+    addedKomIds.add(k.id);
+    const chip = document.createElement('span');
+    chip.className = 'komunitas-chip';
+    chip.innerHTML = `${k.nama}<button type="button" aria-label="Hapus">&#10005;</button><input type="hidden" name="komunitas_id" value="${k.id}">`;
+    chip.querySelector('button').addEventListener('click', () => {
+      addedKomIds.delete(k.id);
+      chip.remove();
+    });
+    komChips.appendChild(chip);
+    komInput.value = '';
+    komDropdown.style.display = 'none';
+  }
+
+  function renderKomDropdown(items) {
+    if (!items.length) {
+      komDropdown.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--c-text-muted)">Komunitas tidak ditemukan.</div>';
+    } else {
+      komDropdown.innerHTML = items.map(k =>
+        `<div class="komunitas-dd-item" data-id="${k.id}">${k.nama} <span style="font-size:11px;color:var(--c-text-muted)">${k.kode}</span></div>`
+      ).join('');
+      komDropdown.querySelectorAll('.komunitas-dd-item').forEach(el => {
+        el.addEventListener('click', () => addKomChip(ALL_KOMUNITAS.find(k => k.id === parseInt(el.dataset.id))));
+      });
+    }
+    komDropdown.style.display = 'block';
+  }
+
+  komInput.addEventListener('input', () => {
+    const q = komInput.value.trim().toLowerCase();
+    if (!q) { komDropdown.style.display = 'none'; return; }
+    renderKomDropdown(ALL_KOMUNITAS.filter(k => !addedKomIds.has(k.id) && k.nama.toLowerCase().includes(q)).slice(0, 8));
+  });
+
+  document.addEventListener('click', e => {
+    if (!document.getElementById('komunitas-add-wrap').contains(e.target))
+      komDropdown.style.display = 'none';
+  });
+
+})();
+</script>
+
+</div>
+{% endblock %}

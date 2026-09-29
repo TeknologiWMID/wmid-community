@@ -1,0 +1,383 @@
+{% extends "directory/base.html" %}
+{% load directory_tags %}
+{% block title %}Anggota — Admin WMID{% endblock %}
+
+{% block head %}
+<style>
+  .mini-av {
+    width:28px;height:28px;border-radius:50%;
+    background:var(--c-primary);color:#fff;
+    font-size:10px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .avail-dot {
+    display:inline-block;width:7px;height:7px;
+    border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0;
+  }
+  .dot-aktif { background:var(--c-success); }
+  .dot-sibuk { background:var(--c-danger); }
+  .dot-tidak_aktif { background:#D97706; }
+  .kom-chip {
+    display:inline-block;font-size:10px;padding:1px 6px;
+    border-radius:99px;background:var(--c-primary-light);color:var(--c-primary);
+    white-space:nowrap;line-height:1.7;
+  }
+  .tbl-anggota { min-width:1040px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+{% include "directory/_admin_nav.html" %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Anggota</h1>
+    <p style="font-size:13px;color:var(--c-text-muted);margin-top:2px">{{ page_obj.paginator.count }} anggota ditemukan</p>
+  </div>
+  <button type="button" id="btn-ekspor" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Ekspor data
+  </button>
+</div>
+
+<div class="card" style="padding:20px">
+
+  <!-- Filter form -->
+  <form method="get" class="filter-form">
+    <input type="search" name="q" value="{{ q }}" placeholder="Cari nama, email, lokasi…" autocomplete="off" oninput="adminSearch(this.form)">
+    <select name="avail" onchange="this.form.submit()">
+      <option value="">Semua ketersediaan</option>
+      <option value="aktif" {% if avail == 'aktif' %}selected{% endif %}>Aktif</option>
+      <option value="sibuk" {% if avail == 'sibuk' %}selected{% endif %}>Sibuk</option>
+      <option value="tidak_aktif" {% if avail == 'tidak_aktif' %}selected{% endif %}>Tidak aktif</option>
+    </select>
+    <select name="komunitas" onchange="this.form.submit()">
+      <option value="">Semua komunitas</option>
+      {% for k in komunitas_all %}
+      <option value="{{ k.slug }}" {% if kom == k.slug %}selected{% endif %}>{{ k.nama_komunitas }}</option>
+      {% endfor %}
+    </select>
+    <select name="sort" onchange="this.form.submit()">
+      <option value="nama" {% if sort == 'nama' %}selected{% endif %}>Nama A–Z</option>
+      <option value="kg-desc" {% if sort == 'kg-desc' %}selected{% endif %}>Kegiatan terbanyak</option>
+      <option value="kg-asc" {% if sort == 'kg-asc' %}selected{% endif %}>Kegiatan tersedikit</option>
+      <option value="join-desc" {% if sort == 'join-desc' %}selected{% endif %}>Bergabung terbaru</option>
+    </select>
+    {% if q or avail or kom or sort != 'nama' %}
+    <a href="{% url 'admin_anggota' %}" class="btn btn-ghost btn-sm">Reset</a>
+    {% endif %}
+  </form>
+
+  <!-- Table -->
+  <div class="tbl-wrap">
+    <table class="tbl-anggota">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Email</th>
+          <th>Lokasi</th>
+          <th>Status</th>
+          <th>Komunitas</th>
+          <th>Keahlian</th>
+          <th>Kegiatan</th>
+          <th>No. HP</th>
+          <th>Username Wiki</th>
+          <th>Bergabung</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in page_obj %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="mini-av">{{ m.display_label|first|upper }}</div>
+              <div style="min-width:0">
+                <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">{{ m.display_label }}</div>
+                {% if m.wikimedia_username %}<div class="meta">{{ m.wikimedia_username }}</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td class="meta" style="white-space:nowrap">{{ m.email|default:"—" }}</td>
+          <td class="meta" style="white-space:nowrap">{{ m.location|default:"—" }}</td>
+          <td style="white-space:nowrap">
+            <span class="avail-dot dot-{{ m.availability }}"></span>
+            <span style="font-size:12px">{{ m.get_availability_display }}</span>
+          </td>
+          <td style="max-width:180px">
+            {% for ka in m.keanggotaan.all %}
+              <span class="kom-chip">{{ ka.komunitas.nama_komunitas|truncatechars:20 }}</span>
+            {% empty %}
+              <span class="meta">—</span>
+            {% endfor %}
+          </td>
+          <td style="max-width:200px">
+            {% with skls=m.skills|split_skills %}
+            {% if skls %}
+              {% for sk in skls %}<span class="kom-chip" style="background:var(--c-bg-subtle);color:var(--c-text-secondary)">{{ sk }}</span>{% endfor %}
+            {% else %}<span class="meta">—</span>{% endif %}
+            {% endwith %}
+          </td>
+          <td style="white-space:nowrap">
+            <span style="font-weight:700;color:var(--c-primary);font-size:13px">{{ m.kg_verified }}</span>
+          </td>
+          <td class="meta" style="white-space:nowrap">{{ m.phone|default:"—" }}</td>
+          <td class="meta" style="white-space:nowrap">{{ m.wikimedia_username|default:"—" }}</td>
+          <td class="meta" style="white-space:nowrap">
+            {% if m.auth_method == 'import' %}
+            <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--c-warn-light);color:#92400E">Belum terdaftar</span>
+            {% else %}
+            {{ m.created_at|date:"d M Y" }}
+            {% endif %}
+          </td>
+          <td style="text-align:right">
+            <a href="{% url 'admin_anggota_detail' m.pk %}" class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:12px">Detail</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--c-text-muted);font-size:13px">Tidak ada anggota yang cocok.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="pagination-wrap">
+    <span class="pagination-info">
+      Menampilkan {{ page_obj.start_index }}–{{ page_obj.end_index }} dari {{ page_obj.paginator.count }} anggota
+    </span>
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?{{ filter_params }}&page={{ page_obj.previous_page_number }}" class="page-btn">&larr;</a>
+      {% else %}
+        <span class="page-btn is-disabled">&larr;</span>
+      {% endif %}
+      {% for p in page_range %}
+        {% if p == '…' %}
+          <span class="page-btn is-ellipsis">…</span>
+        {% elif p == page_obj.number %}
+          <span class="page-btn is-active">{{ p }}</span>
+        {% else %}
+          <a href="?{{ filter_params }}&page={{ p }}" class="page-btn">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <a href="?{{ filter_params }}&page={{ page_obj.next_page_number }}" class="page-btn">&rarr;</a>
+      {% else %}
+        <span class="page-btn is-disabled">&rarr;</span>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div style="padding-top:14px;border-top:1px solid var(--c-border)">
+    <span class="pagination-info">{{ page_obj.paginator.count }} anggota</span>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+
+{# ── Modal Ekspor ─────────────────────────────────────────────────────────── #}
+<div id="modal-ekspor" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);overflow-y:auto;padding:32px 16px">
+  <div style="background:var(--c-bg-card);border-radius:12px;max-width:860px;margin:0 auto;box-shadow:0 8px 32px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:calc(100vh - 64px)">
+
+    {# Header #}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--c-border);flex-shrink:0">
+      <div>
+        <div style="font-size:16px;font-weight:700">Ekspor Data Anggota</div>
+        <div id="ekspor-subtitle" style="font-size:12px;color:var(--c-text-muted);margin-top:2px">Memuat data…</div>
+      </div>
+      <button type="button" id="btn-modal-close" style="background:none;border:none;cursor:pointer;color:var(--c-text-muted);font-size:20px;line-height:1;padding:4px">&times;</button>
+    </div>
+
+    {# Body #}
+    <div style="padding:20px 24px;overflow-y:auto;flex:1;min-height:0">
+
+      {# Pilih kolom #}
+      <p style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c-text-muted);margin-bottom:10px">Pilih kolom yang akan diekspor</p>
+      <div id="col-checks" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px 16px;margin-bottom:20px"></div>
+
+      {# Preview #}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <p style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c-text-muted);margin:0">Pratinjau (8 baris pertama)</p>
+        <span id="ekspor-total" style="font-size:12px;color:var(--c-text-muted)"></span>
+      </div>
+      <div style="overflow-x:auto;border:1px solid var(--c-border);border-radius:8px">
+        <table id="preview-table" style="min-width:100%;font-size:12px;border-collapse:collapse">
+          <thead id="preview-thead" style="background:var(--c-bg-subtle)"></thead>
+          <tbody id="preview-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    {# Footer #}
+    <div style="padding:16px 24px;border-top:1px solid var(--c-border);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:600;color:var(--c-text-secondary);margin-right:4px">Unduh sebagai:</span>
+      <button type="button" id="btn-dl-csv" class="btn btn-secondary btn-sm" disabled>CSV</button>
+      <button type="button" id="btn-dl-xlsx" class="btn btn-primary btn-sm" disabled>XLSX</button>
+      <span id="ekspor-loading" style="font-size:12px;color:var(--c-text-muted);margin-left:8px;display:none">Memuat…</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  const XLSX_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  let _xlsxReady = false, _xlsxCallbacks = [];
+  function loadXlsx(cb) {
+    if (_xlsxReady) { cb(); return; }
+    _xlsxCallbacks.push(cb);
+    if (_xlsxCallbacks.length > 1) return;
+    const s = document.createElement('script');
+    s.src = XLSX_CDN;
+    s.onload = () => { _xlsxReady = true; _xlsxCallbacks.forEach(f => f()); _xlsxCallbacks = []; };
+    document.head.appendChild(s);
+  }
+  const EXPORT_URL = '{% url "admin_anggota_export" %}';
+
+  const COLUMNS = [
+    { key: 'display_name',      label: 'Nama Tampil',          checked: true  },
+    { key: 'wikimedia_username',label: 'Username Wiki',         checked: true  },
+    { key: 'email',             label: 'Email',                 checked: true  },
+    { key: 'phone',             label: 'No. HP',                checked: true  },
+    { key: 'role',              label: 'Role',                  checked: true  },
+    { key: 'availability',      label: 'Ketersediaan',          checked: true  },
+    { key: 'wiki_verified',     label: 'Terverifikasi Wiki',    checked: false },
+    { key: 'location',          label: 'Lokasi',                checked: false },
+    { key: 'skills',            label: 'Keahlian',              checked: false },
+    { key: 'joined_wmid_at',    label: 'Bergabung WMID',        checked: false },
+    { key: 'created_at',        label: 'Terdaftar',             checked: false },
+    { key: 'edit_count',        label: 'Jumlah Edit',           checked: false },
+    { key: 'kg_verified',       label: 'Kegiatan Terverifikasi',checked: false },
+    { key: 'komunitas',         label: 'Komunitas',             checked: false },
+    { key: 'bio',               label: 'Bio',                   checked: false },
+  ];
+
+  let allData   = null;
+  let isLoading = false;
+
+  const modal      = document.getElementById('modal-ekspor');
+  const colChecks  = document.getElementById('col-checks');
+  const prevThead  = document.getElementById('preview-thead');
+  const prevTbody  = document.getElementById('preview-tbody');
+  const subtitle   = document.getElementById('ekspor-subtitle');
+  const totalSpan  = document.getElementById('ekspor-total');
+  const loadingSpan= document.getElementById('ekspor-loading');
+  const btnCSV     = document.getElementById('btn-dl-csv');
+  const btnXLSX    = document.getElementById('btn-dl-xlsx');
+
+  /* ── Build checkbox list ─────────────────────────────────────────────── */
+  function buildChecks() {
+    colChecks.innerHTML = '';
+    COLUMNS.forEach((col, i) => {
+      const id = `chk-col-${i}`;
+      const wrap = document.createElement('label');
+      wrap.htmlFor = id;
+      wrap.style.cssText = 'display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;user-select:none';
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.id   = id;
+      chk.checked = col.checked;
+      chk.addEventListener('change', () => { col.checked = chk.checked; renderPreview(); });
+      wrap.appendChild(chk);
+      wrap.appendChild(document.createTextNode(col.label));
+      colChecks.appendChild(wrap);
+    });
+  }
+
+  /* ── Render preview table ────────────────────────────────────────────── */
+  function renderPreview() {
+    if (!allData) return;
+    const active = COLUMNS.filter(c => c.checked);
+    if (!active.length) { prevThead.innerHTML = ''; prevTbody.innerHTML = ''; return; }
+
+    prevThead.innerHTML = '<tr>' + active.map(c =>
+      `<th style="padding:7px 10px;text-align:left;font-size:11px;white-space:nowrap;border-bottom:1px solid var(--c-border)">${c.label}</th>`
+    ).join('') + '</tr>';
+
+    const rows = allData.slice(0, 8);
+    prevTbody.innerHTML = rows.map((row, ri) =>
+      '<tr style="' + (ri % 2 ? 'background:var(--c-bg-subtle)' : '') + '">' +
+      active.map(c =>
+        `<td style="padding:6px 10px;border-bottom:1px solid var(--c-border);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis">${row[c.key] ?? ''}</td>`
+      ).join('') + '</tr>'
+    ).join('');
+
+    totalSpan.textContent = `Total: ${allData.length} anggota`;
+  }
+
+  /* ── Fetch data ──────────────────────────────────────────────────────── */
+  async function fetchData() {
+    if (allData || isLoading) return;
+    isLoading = true;
+    loadingSpan.style.display = '';
+    try {
+      const res  = await fetch(EXPORT_URL);
+      const json = await res.json();
+      allData = json.rows;
+      subtitle.textContent = `${allData.length} anggota siap diekspor`;
+      btnCSV.disabled  = false;
+      btnXLSX.disabled = false;
+      renderPreview();
+    } catch (e) {
+      subtitle.textContent = 'Gagal memuat data.';
+    } finally {
+      isLoading = false;
+      loadingSpan.style.display = 'none';
+    }
+  }
+
+  /* ── Build export rows ───────────────────────────────────────────────── */
+  function buildExportRows() {
+    const active = COLUMNS.filter(c => c.checked);
+    const header = active.map(c => c.label);
+    const body   = allData.map(row => active.map(c => row[c.key] ?? ''));
+    return [header, ...body];
+  }
+
+  /* ── Download CSV ────────────────────────────────────────────────────── */
+  btnCSV.addEventListener('click', () => {
+    const rows  = buildExportRows();
+    const csv   = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const blob  = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a     = document.createElement('a');
+    a.href      = URL.createObjectURL(blob);
+    a.download  = `anggota_wmid_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  });
+
+  btnXLSX.addEventListener('click', () => {
+    loadXlsx(() => {
+      const rows = buildExportRows();
+      const ws   = XLSX.utils.aoa_to_sheet(rows);
+      const wb   = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Anggota');
+      XLSX.writeFile(wb, `anggota_wmid_${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+  });
+
+  /* ── Open / close ────────────────────────────────────────────────────── */
+  document.getElementById('btn-ekspor').addEventListener('click', () => {
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    buildChecks();
+    fetchData();
+  });
+
+  function closeModal() {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btn-modal-close').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+})();
+</script>
+
+</div>
+{% endblock %}

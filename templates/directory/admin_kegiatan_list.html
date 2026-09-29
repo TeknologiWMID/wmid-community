@@ -1,0 +1,96 @@
+{% extends "directory/base.html" %}
+{% block title %}Verifikasi data — Admin{% endblock %}
+
+{% block content %}
+<div class="page-content">
+{% include "directory/_admin_nav.html" %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Verifikasi Data</h1>
+    <p style="font-size:13px;color:var(--c-text-muted);margin-top:2px">Pendaftaran yang menunggu konfirmasi</p>
+  </div>
+</div>
+
+  {# Komunitas pending #}
+  {% if pending_kom %}
+  <div class="card" style="margin-bottom:20px;border-color:#f59e0b">
+    <p class="section-label" style="margin-bottom:14px;color:#b45309">
+      Permintaan keanggotaan komunitas <span style="font-weight:400;color:var(--c-text-muted)">({{ pending_kom|length }})</span>
+    </p>
+    <div style="display:flex;flex-direction:column;gap:0">
+      {% for entry in pending_kom %}
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--c-border);flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:13px;font-weight:600">{{ entry.member.display_label }}</div>
+          <div style="font-size:12px;color:var(--c-text-muted)">
+            {% if entry.tipe == 'gabung' %}Ingin bergabung{% else %}Ingin keluar{% endif %}
+            — <strong>{{ entry.komunitas.nama_komunitas }}</strong>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--c-text-muted)">{{ entry.created_at|date:"d M Y" }}</div>
+        <div style="display:flex;gap:6px">
+          <form method="post" action="{% url 'admin_komunitas_verify' entry.pk %}" style="margin:0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="terima">
+            <button type="submit" class="btn btn-primary btn-sm">Terima</button>
+          </form>
+          <form method="post" action="{% url 'admin_komunitas_verify' entry.pk %}" style="margin:0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="tolak">
+            <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--c-danger)">Tolak</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Kegiatan pending #}
+  {% if pending %}
+  <div class="card" style="margin-bottom:20px;border-color:#f59e0b">
+    <p class="section-label" style="margin-bottom:14px;color:#b45309">
+      Pendaftaran kegiatan <span style="font-weight:400;color:var(--c-text-muted)">({{ pending|length }})</span>
+    </p>
+    <div style="display:flex;flex-direction:column;gap:0">
+      {% for entry in pending %}
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--c-border);flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:13px;font-weight:600">{{ entry.member.display_label }}</div>
+          <div style="font-size:12px;color:var(--c-text-muted)">
+            {{ entry.get_role_display }} — <a href="{% url 'admin_kegiatan_detail' entry.kegiatan.kode %}" style="color:var(--c-primary)">{{ entry.kegiatan.judul }}</a>
+            <span style="color:var(--c-border)">·</span> {{ entry.kegiatan.kode }}
+          </div>
+          {% if entry.catatan %}
+          <div style="font-size:12px;color:var(--c-text-secondary);margin-top:2px">"{{ entry.catatan }}"</div>
+          {% endif %}
+        </div>
+        <div style="font-size:11px;color:var(--c-text-muted)">{{ entry.created_at|date:"d M Y" }}</div>
+        <div style="display:flex;gap:6px">
+          <form method="post" action="{% url 'admin_kegiatan_verify' entry.pk %}" style="margin:0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="terima">
+            <button type="submit" class="btn btn-primary btn-sm">Terima</button>
+          </form>
+          <form method="post" action="{% url 'admin_kegiatan_verify' entry.pk %}" style="margin:0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="tolak">
+            <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--c-danger)">Tolak</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not pending and not pending_kom %}
+  <div class="card" style="margin-bottom:20px">
+    <p class="meta">Tidak ada data yang menunggu verifikasi.</p>
+  </div>
+  {% endif %}
+
+
+</div>
+{% endblock %}

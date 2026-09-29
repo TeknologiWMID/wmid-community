@@ -1,0 +1,343 @@
+{% extends "directory/base.html" %}
+{% block title %}Edit Profil — {{ member.display_label }}{% endblock %}
+
+{% block head %}
+<style>
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .profile-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-section-title {
+    font-size: 12px; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--c-text-muted);
+    margin-bottom: 14px;
+  }
+  .form-divider {
+    height: 1px; background: var(--c-border);
+    margin: 20px 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+{# ── Breadcrumb ────────────────────────────────────────────────────────────── #}
+<a href="{% url 'profile' %}" class="breadcrumb">&larr; Profil</a>
+
+<h1 style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px">Edit profil</h1>
+<p class="meta" style="margin-bottom:24px">Data yang kamu isi akan terlihat oleh pengurus sistem.</p>
+
+<div class="profile-grid">
+
+  {# ── Kolom kiri ──────────────────────────────────────────────────────────── #}
+  <div>
+
+    {# ── Form utama ────────────────────────────────────────────────────────── #}
+    <div class="card">
+      <form method="post" action="{% url 'profile_edit' %}">
+        {% csrf_token %}
+
+        {# Seksi A: Tentang kamu #}
+        <p class="form-section-title">Tentang kamu</p>
+
+        <div class="form-field">
+          <label class="form-label" for="display_name">Nama lengkap</label>
+          <input type="text" id="display_name" name="display_name"
+                 value="{{ member.display_name }}" maxlength="200"
+                 placeholder="Nama lengkap kamu">
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="bio">Bio singkat</label>
+          <textarea id="bio" name="bio" maxlength="500" rows="4"
+                    placeholder="Ceritakan sedikit tentang dirimu dan peranmu di komunitas Wikimedia...">{{ member.bio }}</textarea>
+          <p class="form-hint">Maks. 500 karakter.</p>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Status ketersediaan</label>
+          <div class="avail-options">
+            <label class="avail-option is-aktif">
+              <input type="radio" name="availability" value="aktif" {% if member.availability == 'aktif' or not member.availability %}checked="checked"{% endif %}>
+              <span class="avail-label">
+                <span class="avail-dot avail-dot-aktif"></span>Aktif
+              </span>
+            </label>
+            <label class="avail-option is-tidak-aktif">
+              <input type="radio" name="availability" value="tidak_aktif" {% if member.availability == 'tidak_aktif' %}checked="checked"{% endif %}>
+              <span class="avail-label">
+                <span class="avail-dot avail-dot-tidak-aktif"></span>Tidak aktif
+              </span>
+            </label>
+            <label class="avail-option is-sibuk">
+              <input type="radio" name="availability" value="sibuk" {% if member.availability == 'sibuk' %}checked="checked"{% endif %}>
+              <span class="avail-label">
+                <span class="avail-dot avail-dot-sibuk"></span>Sibuk
+              </span>
+            </label>
+          </div>
+          <p class="form-hint">Membantu pengurus menentukan apakah kamu bisa diundang ke kegiatan.</p>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Keahlian</label>
+          <div data-tag-input>
+            <div class="tag-input-wrap">
+              <input type="text" class="tag-input-field" placeholder="Tulis keahlian, tekan Enter atau +">
+              <button type="button" class="tag-add-btn" aria-label="Tambah keahlian">+</button>
+            </div>
+            <input type="hidden" name="skills" value="{{ member.skills }}">
+          </div>
+          <p class="form-hint">Ditampilkan di profilmu.</p>
+        </div>
+
+        {# Seksi B: Kontak & Lokasi #}
+        <div class="form-divider"></div>
+        <p class="form-section-title">Kontak &amp; Lokasi</p>
+
+        <div class="form-field">
+          <label class="form-label" for="email">Email</label>
+          {% if member.auth_method == 'email' %}
+            <input type="email" id="email" name="email"
+                   value="{{ member.email }}"
+                   disabled
+                   style="background:var(--c-bg-subtle);color:var(--c-text-muted);cursor:not-allowed">
+            <p class="form-hint">Email tidak bisa diubah pada akun email.</p>
+          {% else %}
+            <input type="email" id="email" name="email"
+                   value="{{ member.email }}"
+                   placeholder="kamu@example.com"
+                   autocomplete="email">
+          {% endif %}
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="phone">Nomor HP / WA <span class="meta" style="font-weight:400">(opsional)</span></label>
+          <input type="tel" id="phone" name="phone"
+                 value="{{ member.phone }}" maxlength="20"
+                 placeholder="+62 812 xxxx xxxx">
+        </div>
+
+        <div data-location-form data-location="{{ member.location }}"
+             style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-field">
+            <label class="form-label" for="location-province">Provinsi</label>
+            <select id="location-province" name="location_province" data-location-province>
+              <option value="">Pilih provinsi…</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="location-city">Kota / Kabupaten</label>
+            <select id="location-city" name="location_city" data-location-city disabled>
+              <option value="">Pilih kota/kabupaten…</option>
+            </select>
+          </div>
+        </div>
+
+        {# Seksi C: Keanggotaan WMID #}
+        <div class="form-divider"></div>
+        <p class="form-section-title">Keanggotaan WMID</p>
+
+        <div class="form-field">
+          <label class="form-label" for="joined_wmid_at">Bergabung WMID sejak</label>
+          <input type="date" id="joined_wmid_at" name="joined_wmid_at"
+                 value="{% if member.joined_wmid_at %}{{ member.joined_wmid_at|date:'Y-m-d' }}{% endif %}">
+          <p class="form-hint">Tanggal kamu resmi menjadi anggota Wikimedia Indonesia.</p>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding-top:4px">
+          <button type="submit" class="btn btn-primary">Simpan perubahan</button>
+          <a href="{% url 'profile' %}" class="btn btn-secondary">Batal</a>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+
+  {# ── Kolom kanan: info Wikimedia + Komunitas ─────────────────────────────── #}
+  <div>
+    <div class="card">
+      <p class="section-label">Akun Wikimedia</p>
+
+      {% if member.wiki_verified %}
+        <p class="meta" style="margin-bottom:16px">Data diambil otomatis dari Wikimedia. Tidak bisa diubah dari sini.</p>
+        <table>
+          <tbody>
+            <tr>
+              <th style="font-size:12px;width:100px">Username</th>
+              <td>
+                <a href="https://meta.wikimedia.org/wiki/User:{{ member.wikimedia_username }}"
+                   target="_blank" rel="noopener" style="font-weight:500">{{ member.wikimedia_username }}</a>
+              </td>
+            </tr>
+            <tr>
+              <th style="font-size:12px">Total edit</th>
+              <td>{{ member.edit_count }}</td>
+            </tr>
+            <tr>
+              <th style="font-size:12px">Terdaftar</th>
+              <td>{% if member.registered_at %}{{ member.registered_at|date:"d M Y" }}{% else %}&mdash;{% endif %}</td>
+            </tr>
+            {% if special_groups %}
+            <tr>
+              <th style="font-size:12px">Hak</th>
+              <td>
+                {% for g in special_groups %}
+                  <span class="badge badge-wiki" style="margin-right:3px;margin-bottom:3px">{{ g }}</span>
+                {% endfor %}
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="meta" style="margin-bottom:16px">Hubungkan akun Wikimedia untuk menarik riwayat kontribusi dan memverifikasi identitasmu.</p>
+        <div style="background:var(--c-bg);border:1px solid var(--c-border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px">
+          <p style="font-size:13px;color:var(--c-text-secondary);margin-bottom:4px;font-weight:500">Akun Wikimedia</p>
+          <p style="font-size:13px;color:var(--c-text-muted)">Belum terhubung</p>
+        </div>
+        <a href="{% url 'oauth_login' %}" class="btn btn-primary" style="width:100%;text-align:center;display:block">
+          Konfirmasi dengan Wikimedia
+        </a>
+        <p class="meta" style="margin-top:10px;font-size:12px;line-height:1.5">
+          Kamu akan diarahkan ke Wikimedia untuk otorisasi. Setelah konfirmasi, riwayat kontribusi akan disinkronkan otomatis.
+        </p>
+      {% endif %}
+    </div>
+
+    {# ── Komunitas ─────────────────────────────────────────────────────────── #}
+    <div class="card" style="margin-top:20px" id="komunitas">
+      <p class="section-label" style="margin-bottom:14px">Komunitas saya</p>
+
+      {% if my_komunitas or pending_gabung %}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+        {% for k in my_komunitas %}
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 6px;border:1px solid var(--c-border);border-radius:99px;background:var(--c-bg-subtle);font-size:13px">
+          {% if k.logo %}
+            <img src="{{ k.logo }}" style="width:20px;height:20px;border-radius:50%;object-fit:contain;flex-shrink:0;background:#fff" alt="">
+          {% else %}
+            <div style="width:20px;height:20px;border-radius:50%;background:var(--c-primary);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ k.nama_komunitas|first|upper }}</div>
+          {% endif %}
+          <span style="font-weight:500">{{ k.nama_komunitas }}</span>
+          {% if k.pk in pending_keluar_ids %}
+            <span style="font-size:10px;color:#b45309;font-weight:600">Menunggu verifikasi</span>
+            <form method="post" action="{% url 'komunitas_pending_cancel' k.slug %}" style="margin:0;line-height:1">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'profile_edit' %}">
+              <button type="submit" title="Batalkan permintaan keluar"
+                      style="width:16px;height:16px;border-radius:50%;border:none;background:#fde68a;color:#92400E;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">&#10005;</button>
+            </form>
+          {% else %}
+            <form method="post" action="{% url 'komunitas_leave' k.slug %}" style="margin:0;line-height:1">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'profile_edit' %}#komunitas">
+              <button type="submit" title="Keluar dari komunitas ini"
+                      style="width:16px;height:16px;border-radius:50%;border:none;background:#e5e7eb;color:#666;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">&#10005;</button>
+            </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% for p in pending_gabung %}
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border:1px dashed #f59e0b;border-radius:99px;background:#fffbeb;font-size:13px">
+          {% if p.komunitas.logo %}
+            <img src="{{ p.komunitas.logo }}" style="width:20px;height:20px;border-radius:50%;object-fit:contain;flex-shrink:0;background:#fff;opacity:.6" alt="">
+          {% else %}
+            <div style="width:20px;height:20px;border-radius:50%;background:#f59e0b;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ p.komunitas.nama_komunitas|first|upper }}</div>
+          {% endif %}
+          <span style="font-weight:500;color:#92400E">{{ p.komunitas.nama_komunitas }}</span>
+          <span style="font-size:10px;color:#b45309;font-weight:600">Menunggu verifikasi</span>
+          <form method="post" action="{% url 'komunitas_pending_cancel' p.komunitas.slug %}" style="margin:0;line-height:1">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'profile_edit' %}">
+            <button type="submit" title="Batalkan permintaan"
+                    style="width:16px;height:16px;border-radius:50%;border:none;background:#fde68a;color:#92400E;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">&#10005;</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="meta" style="margin-bottom:16px">Belum bergabung dengan komunitas mana pun.</p>
+      {% endif %}
+
+      {% if all_komunitas %}
+      <div style="position:relative" id="komunitas-search-wrap">
+        <div style="position:relative">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--c-text-muted);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="komunitas-search" placeholder="Cari komunitas untuk bergabung…"
+            style="width:100%;padding:8px 12px 8px 32px;font-size:13px;border:1px solid var(--c-border);border-radius:var(--radius-sm);outline:none;box-sizing:border-box"
+            autocomplete="off">
+        </div>
+        <div id="komunitas-results" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--c-bg-card);border:1px solid var(--c-border);border-radius:var(--radius-sm);box-shadow:var(--shadow-elevated);z-index:100;max-height:260px;overflow-y:auto"></div>
+      </div>
+
+      <script type="application/json" id="komunitas-data">
+      [{% for k in all_komunitas %}{"slug":"{{ k.slug }}","name":"{{ k.nama_komunitas|escapejs }}","jenis":"{{ k.jenis_label }}","logo":"{{ k.logo|default:'' }}","joinUrl":"{% url 'komunitas_join' k.slug %}","csrfToken":"{{ csrf_token }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+      </script>
+      <script>
+      (function() {
+        const KOMUNITAS   = JSON.parse(document.getElementById('komunitas-data').textContent);
+        const NEXT_URL    = "{% url 'profile_edit' %}#komunitas";
+        const searchInput = document.getElementById('komunitas-search');
+        const resultsBox  = document.getElementById('komunitas-results');
+
+        function renderResults(items) {
+          if (!items.length) {
+            resultsBox.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:var(--c-text-muted)">Tidak ada komunitas ditemukan.</div>';
+          } else {
+            resultsBox.innerHTML = items.map(k => {
+              const logo = k.logo
+                ? `<img src="${k.logo}" style="width:28px;height:28px;border-radius:50%;object-fit:contain;border:1px solid var(--c-border);padding:2px;background:#fff;flex-shrink:0" onerror="this.style.display='none'">`
+                : `<div style="width:28px;height:28px;border-radius:50%;background:var(--c-primary);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${k.name.charAt(0).toUpperCase()}</div>`;
+              return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--c-bg-subtle)">
+                ${logo}
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${k.name}</div>
+                  <div style="font-size:11px;color:var(--c-text-muted)">${k.jenis}</div>
+                </div>
+                <form method="post" action="${k.joinUrl}" style="margin:0;flex-shrink:0">
+                  <input type="hidden" name="csrfmiddlewaretoken" value="${k.csrfToken}">
+                  <input type="hidden" name="next" value="${NEXT_URL}">
+                  <button type="submit" style="font-size:12px;font-weight:600;padding:5px 12px;background:var(--c-primary);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap">+ Bergabung</button>
+                </form>
+              </div>`;
+            }).join('');
+          }
+          resultsBox.style.display = 'block';
+        }
+
+        searchInput.addEventListener('input', () => {
+          const q = searchInput.value.trim().toLowerCase();
+          if (!q) { resultsBox.style.display = 'none'; return; }
+          renderResults(KOMUNITAS.filter(k => k.name.toLowerCase().includes(q) || k.jenis.toLowerCase().includes(q)));
+        });
+
+        searchInput.addEventListener('focus', () => {
+          const q = searchInput.value.trim().toLowerCase();
+          if (q) renderResults(KOMUNITAS.filter(k => k.name.toLowerCase().includes(q)));
+        });
+
+        document.addEventListener('click', e => {
+          if (!document.getElementById('komunitas-search-wrap').contains(e.target))
+            resultsBox.style.display = 'none';
+        });
+      })();
+      </script>
+      {% else %}
+      <p class="meta">Kamu sudah bergabung di semua komunitas yang tersedia.</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+
+</div>
+{% endblock %}
