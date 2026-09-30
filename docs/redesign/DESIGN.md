@@ -1,6 +1,6 @@
 # Design Brief: Redesign Direktori Anggota WMID
 
-Versi 1 · 30 September 2026 · Tahap perencanaan (belum implementasi)
+Versi 1.1 · 30 September 2026 (palet diganti ke Biru Wikimedia) · Tahap perencanaan (belum implementasi)
 
 Dokumen ini merangkum rencana redesign tampilan Direktori Anggota Wikimedia Indonesia. Isinya: audit sistem saat ini, arah desain terpilih, design system, inventori komponen, pola layout mobile, dan panduan copywriting. Tiga mockup HTML statis ada di folder `mockups/` sebagai ilustrasi konsep.
 
@@ -102,7 +102,7 @@ Gabungan arah *Kampung Wiki* (hangat, untuk halaman anggota) dan *Meja Pengurus*
 
 **Satu motif identitas: cap verifikasi.** Entri riwayat yang sudah diverifikasi pengurus diberi cap bulat (lingkaran ganda dengan tanda centang), seperti stempel pada surat keterangan kegiatan. Motif ini hanya muncul di tempat yang berarti "sudah diperiksa pengurus": riwayat terverifikasi, antrean yang bersih, dan hasil impor yang berhasil. Tidak dipakai sebagai hiasan.
 
-**Tone visual.** Kredibel tanpa kaku. Netral berbias teal, satu warna utama (teal), satu aksen (kuning matahari) yang muncul sekali per layar untuk hal yang butuh perhatian pengurus.
+**Tone visual.** Kredibel tanpa kaku. Netral berbias biru, satu warna utama (biru Wikimedia, digelapkan dari #006699 agar teks putih tetap tajam), satu aksen (kuning jingga) yang muncul sekali per layar untuk hal yang butuh perhatian pengurus.
 
 **Tiga pertanyaan penentu per layar.** Sebelum menata halaman, jawab: siapa yang memakai, keputusan apa yang diambil di sini, dan informasi apa yang menentukan keputusan itu. Informasi penentu tampil paling awal dan paling besar.
 
@@ -125,26 +125,26 @@ Rasio kontras dihitung dengan rumus WCAG 2.x (bukan perkiraan).
 
 | Token | Terang | Gelap | Pemakaian | Kontras |
 |---|---|---|---|---|
-| `--bg` | `#F1F4F2` | `#0F1817` | Latar halaman | |
-| `--surface` | `#FFFFFF` | `#162220` | Panel, tabel, kartu | |
-| `--subtle` | `#E6ECE9` | `#1D2C2A` | Chip netral, hover baris | |
-| `--line` | `#D3DCD8` | `#2A3A38` | Garis pemisah (dekoratif) | |
-| `--line-strong` | `#7C8E8A` | `#6B807B` | Tepi input, tombol sekunder | 3.45:1 / 3.89:1 (non-teks) |
-| `--ink` | `#15282A` | `#E4EDEA` | Teks utama | 15.3:1 / 13.7:1 |
-| `--ink-2` | `#4A5C59` | `#BFCFCB` | Teks sekunder | 7.1:1 |
-| `--muted` | `#566A66` | `#A3B6B2` | Meta, keterangan | 5.2:1 di `--bg` / 7.7:1 |
-| `--primary` | `#0E5E5A` | `#6FCBBE` | Tombol utama, tautan, fokus | 7.6:1 / 8.5:1 |
-| `--primary-soft` | `#DCEDEA` | `#173532` | Latar terpilih, avatar | teal di atasnya 6.3:1 |
-| `--accent` | `#F5C84C` | `#F5C84C` | **Satu momen per layar** | `--ink` di atasnya 9.7:1 |
+| `--bg` | `#F2F4F7` | `#0E151B` | Latar halaman | |
+| `--surface` | `#FFFFFF` | `#151F27` | Panel, tabel, kartu | |
+| `--subtle` | `#E6EBF1` | `#1C2833` | Chip netral, hover baris | |
+| `--line` | `#D2DAE3` | `#293745` | Garis pemisah (dekoratif) | |
+| `--line-strong` | `#7A8795` | `#6A7A8A` | Tepi input, tombol sekunder | 3.67:1 / 3.79:1 (non-teks) |
+| `--ink` | `#14212B` | `#E3EAF0` | Teks utama | 14.9:1 / 12.4:1 |
+| `--ink-2` | `#46525E` | `#BCC8D3` | Teks sekunder | 8.0:1 / 9.8:1 |
+| `--muted` | `#56626E` | `#A2B0BD` | Meta, keterangan | 5.7:1 di `--bg` / 8.3:1 |
+| `--primary` | `#0B5C8E` | `#7DBDE8` | Tombol utama, tautan, fokus | 7.2:1 / 8.2:1 |
+| `--primary-soft` | `#DDEAF4` | `#15324A` | Latar terpilih, avatar | biru di atasnya 5.8:1 / 6.5:1 |
+| `--accent` | `#F2B233` | `#F2B233` | **Satu momen per layar** | `--ink` di atasnya 8.7:1 |
 | `--success` | `#1D6B43` | `#7AD3A0` | Terverifikasi, cap, "Bisa diajak" | 6.5:1 / 9.1:1 |
 | `--warning` | `#8A5A00` | `#F2C45A` | Menunggu verifikasi, akun impor | 5.9:1 / 10:1 |
 | `--danger` | `#B42318` | `#FF9A8C` | Hapus, ditolak, error | 6.6:1 / 8:1 |
 | `--busy` | `#B07800` | `#E0A63A` | Titik "Sedang sibuk" | 3.8:1 (non-teks) |
-| `--idle` | `#6F827E` | `#8FA39F` | Titik "Tidak aktif" | 4.1:1 (non-teks) |
+| `--idle` | `#6E7B88` | `#8E9CAA` | Titik "Tidak aktif" | 4.3:1 (non-teks) |
 
 Aturan warna:
 
-- **Palet aktif = netral + teal + satu aksen.** Warna status (success/warning/danger) hanya untuk status, tidak dihitung sebagai warna merek.
+- **Palet aktif = netral + biru + satu aksen.** Warna status (success/warning/danger) hanya untuk status, tidak dihitung sebagai warna merek.
 - **Aksen kuning** hanya untuk: angka antrean verifikasi di tab Pengurus, dan satu sorotan di beranda. Selalu sebagai isian dengan teks `--ink`, tidak pernah sebagai warna teks.
 - **Jenis komunitas dan peran kegiatan tidak lagi diberi warna berbeda.** Keduanya memakai chip netral + ikon. Warna disimpan untuk status, supaya "hijau" selalu berarti terverifikasi.
 - **Ketersediaan** dibedakan warna *dan* bentuk: Bisa diajak (titik hijau penuh), Sedang sibuk (titik kuning tua penuh), Tidak aktif (lingkaran kosong abu-abu). Tetap terbaca bagi pengguna buta warna.
@@ -208,7 +208,7 @@ Tinggi baris isi 1,55; judul 1,2. Judul memakai `text-wrap: balance`. Angka di t
 
 ### 3.6 Ilustrasi
 
-Ilustrasi dipakai sedikit, hanya di tempat yang sepi teks: beranda, empty state utama, halaman 404, dan hasil impor. Gayanya **ilustrasi garis** dengan ketebalan sama seperti ikon (tapi lebih besar), warna teal dengan satu bidang kuning, menggambarkan kegiatan WMID yang nyata:
+Ilustrasi dipakai sedikit, hanya di tempat yang sepi teks: beranda, empty state utama, halaman 404, dan hasil impor. Gayanya **ilustrasi garis** dengan ketebalan sama seperti ikon (tapi lebih besar), warna biru dengan satu bidang kuning, menggambarkan kegiatan WMID yang nyata:
 
 1. **Beranda**: meja pelatihan dengan beberapa laptop dan papan tulis bertuliskan "WikiLatih". Menggambarkan kegiatan yang dicatat sistem.
 2. **Antrean verifikasi kosong**: cap verifikasi besar di atas selembar catatan.
@@ -234,9 +234,9 @@ Hanya tiga gerak, semua di bawah 200 ms, dan mati saat `prefers-reduced-motion`:
 
 | Varian | Pemakaian | Aturan |
 |---|---|---|
-| Utama (teal penuh) | Aksi utama halaman: Simpan perubahan, Catat kegiatan, Terima | Maksimal satu per area |
+| Utama (biru penuh) | Aksi utama halaman: Simpan perubahan, Catat kegiatan, Terima | Maksimal satu per area |
 | Sekunder (garis) | Aksi pendamping: Batal, Ubah profil, Ekspor data, Tolak | |
-| Tenang (teks teal) | Aksi ringan: Hapus saringan, Gabung, Lihat semua | |
+| Tenang (teks biru) | Aksi ringan: Hapus saringan, Gabung, Lihat semua | |
 | Bahaya (merah penuh) | Hanya tombol konfirmasi di modal hapus | Tidak pernah di halaman langsung |
 | Bahaya tenang (teks merah) | Pemicu hapus di baris tabel | Membuka modal konfirmasi |
 
@@ -272,7 +272,7 @@ Label tombol = kata kerja + objek bila perlu ("Simpan perubahan", bukan "OK"). P
 | Cap | Lingkaran ganda + centang | Di samping entri riwayat terverifikasi |
 | Ketersediaan | Titik + teks | Bisa diajak |
 | Status kegiatan | Teks + titik (akan datang: garis; berlangsung: hijau berdenyut sekali saat dimuat, lalu diam; selesai: abu-abu) | Berlangsung |
-| Lencana peran sistem | Garis teal, huruf kapital kecil | ADMIN |
+| Lencana peran sistem | Garis biru, huruf kapital kecil | ADMIN |
 | Akun impor | Latar `--warning-soft`, teks `--warning` | Belum mendaftar |
 | Hitungan antrean | Isian `--accent` | 5 |
 
@@ -291,7 +291,7 @@ Label tombol = kata kerja + objek bila perlu ("Simpan perubahan", bukan "OK"). P
 
 ### Avatar
 
-Inisial dua huruf (sekarang satu huruf). Latar `--primary-soft`, teks teal. Avatar besar di profil memakai latar teal penuh. Tidak ada foto yang diasumsikan.
+Inisial dua huruf (sekarang satu huruf). Latar `--primary-soft`, teks biru. Avatar besar di profil memakai latar biru penuh. Tidak ada foto yang diasumsikan.
 
 ---
 

@@ -197,7 +197,7 @@ function initMap() {
           </div>
         </div>
         ${desc ? `<p style="font-size:11.5px;color:#555;line-height:1.55;margin:0 0 8px">${desc}</p>` : ''}
-        <a href="/komunitas/${p.slug}/" style="font-size:12px;font-weight:600;color:#0E5E5A">Buka halaman komunitas</a>
+        <a href="/komunitas/${p.slug}/" style="font-size:12px;font-weight:600;color:#0B5C8E">Buka halaman komunitas</a>
       </div>`;
     L.marker([p.lat, p.lng], { icon }).addTo(leafletMap).bindPopup(popup, { maxWidth: 240 });
   });

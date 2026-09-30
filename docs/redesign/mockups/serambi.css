@@ -9,24 +9,24 @@
    ===================================================================== */
 
 :root {
-  /* Warna: netral berbias teal, satu warna utama, satu aksen, status semantik */
-  --bg:             #F1F4F2;  /* latar halaman */
+  /* Warna: netral berbias biru, satu warna utama, satu aksen, status semantik */
+  --bg:             #F2F4F7;  /* latar halaman */
   --surface:        #FFFFFF;  /* kartu, tabel, panel */
-  --subtle:         #E6ECE9;  /* baris hover, chip netral, latar sekunder */
-  --line:           #D3DCD8;  /* pemisah dekoratif */
-  --line-strong:    #7C8E8A;  /* tepi input & kontrol (3.45:1 vs putih) */
-  --ink:            #15282A;  /* teks utama (15.3:1) */
-  --ink-2:          #4A5C59;  /* teks sekunder (7.1:1) */
-  --muted:          #566A66;  /* meta, keterangan (5.2:1 di --bg) */
-  --primary:        #0E5E5A;  /* teal: tombol utama, tautan, fokus (7.6:1) */
-  --primary-strong: #0A4744;  /* hover/pressed */
-  --primary-soft:   #DCEDEA;  /* latar terpilih */
+  --subtle:         #E6EBF1;  /* baris hover, chip netral, latar sekunder */
+  --line:           #D2DAE3;  /* pemisah dekoratif */
+  --line-strong:    #7A8795;  /* tepi input & kontrol (3.45:1 vs putih) */
+  --ink:            #14212B;  /* teks utama (15.3:1) */
+  --ink-2:          #46525E;  /* teks sekunder (7.1:1) */
+  --muted:          #56626E;  /* meta, keterangan (5.2:1 di --bg) */
+  --primary:        #0B5C8E;  /* biru Wikimedia: tombol utama, tautan, fokus (7.6:1) */
+  --primary-strong: #084A73;  /* hover/pressed */
+  --primary-soft:   #DDEAF4;  /* latar terpilih */
   --on-primary:     #FFFFFF;
-  --accent:         #F5C84C;  /* matahari: SATU momen per layar, selalu sebagai isian dengan teks --ink */
+  --accent:         #F2B233;  /* kuning jingga: SATU momen per layar, selalu sebagai isian dengan teks --ink */
   --success:        #1D6B43;  --success-soft: #E1F2E8;
   --warning:        #8A5A00;  --warning-soft: #FDF1D2;
   --danger:         #B42318;  --danger-soft:  #FDE7E4;
-  --idle:           #6F827E;  /* titik status "Tidak aktif" */
+  --idle:           #6E7B88;  /* titik status "Tidak aktif" */
   --busy:           #B07800;  /* titik status "Sibuk" */
 
   /* Tipografi */
@@ -55,21 +55,21 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg:#0F1817; --surface:#162220; --subtle:#1D2C2A; --line:#2A3A38; --line-strong:#6B807B;
-    --ink:#E4EDEA; --ink-2:#BFCFCB; --muted:#A3B6B2;
-    --primary:#6FCBBE; --primary-strong:#93DBD0; --primary-soft:#173532; --on-primary:#0F1817;
+    --bg:#0E151B; --surface:#151F27; --subtle:#1C2833; --line:#293745; --line-strong:#6A7A8A;
+    --ink:#E3EAF0; --ink-2:#BCC8D3; --muted:#A2B0BD;
+    --primary:#7DBDE8; --primary-strong:#A3D2F2; --primary-soft:#15324A; --on-primary:#0E151B;
     --success:#7AD3A0; --success-soft:#16301F; --warning:#F2C45A; --warning-soft:#33290F;
-    --danger:#FF9A8C; --danger-soft:#3A1A17; --idle:#8FA39F; --busy:#E0A63A;
+    --danger:#FF9A8C; --danger-soft:#3A1A17; --idle:#8E9CAA; --busy:#E0A63A;
     --shadow-float: 0 8px 28px rgba(0,0,0,.5);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg:#0F1817; --surface:#162220; --subtle:#1D2C2A; --line:#2A3A38; --line-strong:#6B807B;
-  --ink:#E4EDEA; --ink-2:#BFCFCB; --muted:#A3B6B2;
-  --primary:#6FCBBE; --primary-strong:#93DBD0; --primary-soft:#173532; --on-primary:#0F1817;
+  --bg:#0E151B; --surface:#151F27; --subtle:#1C2833; --line:#293745; --line-strong:#6A7A8A;
+  --ink:#E3EAF0; --ink-2:#BCC8D3; --muted:#A2B0BD;
+  --primary:#7DBDE8; --primary-strong:#A3D2F2; --primary-soft:#15324A; --on-primary:#0E151B;
   --success:#7AD3A0; --success-soft:#16301F; --warning:#F2C45A; --warning-soft:#33290F;
-  --danger:#FF9A8C; --danger-soft:#3A1A17; --idle:#8FA39F; --busy:#E0A63A;
+  --danger:#FF9A8C; --danger-soft:#3A1A17; --idle:#8E9CAA; --busy:#E0A63A;
   --shadow-float: 0 8px 28px rgba(0,0,0,.5);
   color-scheme: dark;
 }
