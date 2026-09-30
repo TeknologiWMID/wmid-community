@@ -1,3 +1,4 @@
+import logging
 import json
 
 import requests as _req
@@ -10,6 +11,8 @@ from directory.models import Kegiatan, Komunitas, KomunitasAnggota, KomunitasAng
 from .utils import get_session_member
 
 
+logger = logging.getLogger(__name__)
+
 def sync_komunitas(request):
     member = get_session_member(request)
     if not member or not member.is_admin:
@@ -21,11 +24,13 @@ def sync_komunitas(request):
         resp.raise_for_status()
         payload = resp.json()
     except Exception as e:
-        messages.error(request, f'Gagal fetch API: {e}')
+        logger.warning('Sinkronisasi komunitas gagal: %s', e)
+        messages.error(request, 'Data dari situs WMID tidak bisa diambil saat ini. Coba lagi nanti.')
         return redirect('komunitas_list')
 
     if not payload.get('success'):
-        messages.error(request, 'API mengembalikan error.')
+        logger.warning('API komunitas mengembalikan success=false')
+        messages.error(request, 'Data dari situs WMID tidak bisa diambil saat ini. Coba lagi nanti.')
         return redirect('komunitas_list')
 
     raw = payload.get('data', [])
@@ -56,14 +61,14 @@ def sync_komunitas(request):
         else:
             skipped += 1
 
-    messages.success(request, f'Sinkronisasi selesai: {created} komunitas baru ditambahkan, {skipped} sudah ada.')
+    messages.success(request, f'Sinkronisasi selesai: {created} komunitas baru, {skipped} sudah ada sebelumnya.')
     return redirect('komunitas_list')
 
 
 def komunitas_list(request):
     member = get_session_member(request)
     if not member:
-        messages.info(request, 'Silakan login terlebih dahulu.')
+        messages.info(request, 'Masuk dulu untuk membuka halaman itu.')
         return redirect('index')
 
     komunitas = Komunitas.objects.filter(is_active=True)
@@ -97,7 +102,7 @@ def komunitas_list(request):
 def komunitas_detail(request, slug):
     member = get_session_member(request)
     if not member:
-        messages.info(request, 'Silakan login terlebih dahulu.')
+        messages.info(request, 'Masuk dulu untuk membuka halaman itu.')
         return redirect('index')
 
     try:
@@ -133,21 +138,21 @@ def komunitas_join(request, slug):
         return redirect('komunitas_list')
 
     if KomunitasAnggota.objects.filter(member=member, komunitas=komunitas).exists():
-        messages.info(request, f'Kamu sudah anggota {komunitas.nama_komunitas}.')
+        messages.info(request, f'Kamu sudah tergabung di {komunitas.nama_komunitas}.')
         return redirect(request.POST.get('next', 'profile'))
 
     existing = KomunitasAnggotaPending.objects.filter(member=member, komunitas=komunitas).first()
     if existing:
         if existing.tipe == KomunitasAnggotaPending.TIPE_GABUNG:
-            messages.info(request, 'Permintaan sudah terkirim, sedang menunggu verifikasi.')
+            messages.info(request, 'Permintaanmu sudah terkirim sebelumnya dan masih menunggu.')
         else:
             # Stale pending keluar (member sudah dihapus admin tapi pending belum dibersihkan)
             existing.tipe = KomunitasAnggotaPending.TIPE_GABUNG
             existing.save(update_fields=['tipe'])
-            messages.success(request, f'Permintaan bergabung dengan {komunitas.nama_komunitas} dikirim, menunggu verifikasi admin.')
+            messages.success(request, f'Permintaan bergabung dengan {komunitas.nama_komunitas} terkirim. Pengurus akan memeriksanya.')
     else:
         KomunitasAnggotaPending.objects.create(member=member, komunitas=komunitas, tipe=KomunitasAnggotaPending.TIPE_GABUNG)
-        messages.success(request, f'Permintaan bergabung dengan {komunitas.nama_komunitas} dikirim, menunggu verifikasi admin.')
+        messages.success(request, f'Permintaan bergabung dengan {komunitas.nama_komunitas} terkirim. Pengurus akan memeriksanya.')
     return redirect(request.POST.get('next', 'profile'))
 
 
@@ -171,7 +176,7 @@ def komunitas_leave(request, slug):
         return redirect('komunitas_list')
 
     if not KomunitasAnggota.objects.filter(member=member, komunitas=komunitas).exists():
-        messages.info(request, 'Kamu bukan anggota komunitas ini.')
+        messages.info(request, 'Kamu tidak tergabung di komunitas ini.')
         return redirect(request.POST.get('next', 'profile'))
 
     _, created = KomunitasAnggotaPending.objects.get_or_create(
@@ -179,7 +184,7 @@ def komunitas_leave(request, slug):
         defaults={'tipe': KomunitasAnggotaPending.TIPE_KELUAR},
     )
     if created:
-        messages.success(request, f'Permintaan keluar dari {komunitas.nama_komunitas} dikirim, menunggu verifikasi admin.')
+        messages.success(request, f'Permintaan keluar dari {komunitas.nama_komunitas} terkirim. Pengurus akan memeriksanya.')
     else:
-        messages.info(request, 'Permintaan sudah terkirim, sedang menunggu verifikasi.')
+        messages.info(request, 'Permintaanmu sudah terkirim sebelumnya dan masih menunggu.')
     return redirect(request.POST.get('next', 'profile'))

@@ -1,311 +1,261 @@
 {% extends "directory/base.html" %}
-{% block title %}{{ kegiatan.judul }} — Admin WMID{% endblock %}
+{% load directory_tags %}
+{% block title %}{{ kegiatan.judul }} · Pengurus WMID{% endblock %}
+{% block body_class %}density-meja{% endblock %}
 
 {% block head %}
 <style>
-  .detail-section-title {
-    font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--c-text-muted);margin-bottom:12px;padding-bottom:8px;
-    border-bottom:1px solid var(--c-border);
+  .kg-head-meta { display:flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: var(--s-2); }
+  .kg-title { font-size: var(--t-28); font-weight: 800; letter-spacing: -.02em; }
+  .links { display:flex; flex-direction: column; gap: 4px; }
+  .links a { display:inline-flex; align-items:center; gap: 6px; font-weight: 700; }
+  .peserta-foot { display:flex; justify-content:space-between; align-items:center; gap: var(--s-3); flex-wrap: wrap; padding-top: var(--s-3); border-top: 1px solid var(--line); margin-top: var(--s-2); }
+
+  /* Wizard impor */
+  #imp-modal { align-items: flex-start; justify-content: center; }
+  #imp-box { width: 100%; }
+  .imp-steps { display:flex; align-items:center; gap: var(--s-2); margin-top: var(--s-2); flex-wrap: wrap; }
+  .imp-step { display:inline-flex; align-items:center; gap: 6px; font-size: var(--t-13); font-weight: 700; color: var(--muted); }
+  .imp-step.is-on { color: var(--ink); }
+  .imp-dot { width: 24px; height: 24px; border-radius: 50%; display:grid; place-items:center; font-size: var(--t-12); font-weight: 800; background: var(--subtle); color: var(--muted); }
+  .imp-sep { width: 16px; height: 1px; background: var(--line-strong); }
+  #imp-dropzone {
+    border: 2px dashed var(--line-strong); border-radius: var(--r-card); padding: var(--s-10) var(--s-5);
+    text-align: center; cursor: pointer; display: grid; justify-items: center; gap: var(--s-2); background: var(--surface);
   }
-  .detail-row {
-    display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--c-bg-subtle);
-    align-items:baseline;
-  }
-  .detail-row:last-child { border-bottom:none; }
-  .detail-key { font-size:12px;color:var(--c-text-muted);width:150px;flex-shrink:0; }
-  .detail-val { font-size:13px;color:var(--c-text);flex:1;word-break:break-word; }
-  .mini-av {
-    width:28px;height:28px;border-radius:50%;background:var(--c-primary);
-    color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;
-    justify-content:center;flex-shrink:0;
-  }
-  .avail-dot { width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px; }
-  .dot-aktif { background:var(--c-success); }
-  .dot-sibuk { background:var(--c-danger); }
-  .dot-tidak_aktif { background:#D97706; }
-  .role-chip {
-    display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;
-    border-radius:99px;background:var(--c-primary-light);color:var(--c-primary);
-  }
-  .status-pill {
-    display:inline-flex;align-items:center;gap:5px;
-    font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;
-  }
-  .riwayat-status {
-    display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;
-  }
-  .rs-terverifikasi { background:var(--c-success-light);color:var(--c-success); }
-  .rs-menunggu      { background:var(--c-warn-light);color:#92400E; }
-  .rs-ditolak       { background:#fee2e2;color:#991B1B; }
-  .kom-chip {
-    display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;
-    background:var(--c-primary-light);color:var(--c-primary);margin:2px 2px 2px 0;
+  #imp-dropzone:hover, #imp-dropzone.drag-over, #imp-dropzone:focus-visible { border-color: var(--primary); background: var(--primary-soft); }
+  #imp-dropzone .ico { width: 32px; height: 32px; color: var(--primary); }
+  .imp-err { margin-top: var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--r-control); background: var(--danger-soft); color: var(--danger); font-size: var(--t-14); font-weight: 600; }
+  #imp-col-wrap { display:flex; gap: var(--s-3); overflow-x: auto; padding-bottom: var(--s-2); }
+  .imp-col-card { border: 1px solid var(--line); border-radius: var(--r-control); padding: var(--s-3); width: 190px; flex-shrink: 0; background: var(--surface); }
+  .imp-col-card-name { font-size: var(--t-13); font-weight: 800; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .imp-col-samples { font-size: var(--t-12); color: var(--muted); margin-bottom: 8px; min-height: 40px; line-height: 1.6; }
+  .imp-col-samples span { display:block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .imp-col-select { font-size: var(--t-14); min-height: 40px; }
+  .imp-col-card.mapped-nama  { border-color: var(--primary); background: var(--primary-soft); }
+  .imp-col-card.mapped-email { border-color: var(--success); background: var(--success-soft); }
+  .imp-col-card.mapped-hp    { border-color: var(--warning); background: var(--warning-soft); }
+  .imp-tools { display:flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; margin-bottom: var(--s-3); }
+  .imp-tools select { width: auto; min-width: 170px; font-size: var(--t-14); }
+  .imp-table-wrap { border: 1px solid var(--line); border-radius: var(--r-control); max-height: 50vh; overflow: auto; }
+  .imp-table-wrap table { min-width: 560px; font-size: var(--t-13); }
+  .imp-table-wrap thead th { position: sticky; top: 0; z-index: 1; }
+  .imp-row-role { font-size: var(--t-13); min-height: 36px; padding-block: 4px; }
+  #imp-s4 { text-align: center; padding: var(--s-6) 0; display: grid; gap: var(--s-2); justify-items: center; }
+  #imp-result-title { font-size: var(--t-18); font-weight: 800; }
+  #imp-result-body { color: var(--ink-2); font-size: var(--t-14); line-height: 1.7; }
+  @media (max-width: 720px) {
+    .kg-title { font-size: var(--t-22); }
+    #imp-modal { padding: 0; }
+    .imp-col-card { width: 160px; }
+    #imp-footer .btn { flex: 1; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-content">
-{% include "directory/_admin_nav.html" %}
+  {% include "directory/_admin_nav.html" %}
 
-<div class="page-header">
-  <h1 class="page-title">Detail Kegiatan</h1>
-  <div class="page-header-actions">
-    <a href="{% url 'admin_kegiatan_data' %}" class="btn btn-secondary btn-sm">&larr; Kembali</a>
-    <button id="btn-imp" class="btn btn-secondary btn-sm">Import peserta</button>
-    <a href="{% url 'admin_kegiatan_edit' kegiatan.kode %}" class="btn btn-primary btn-sm">Edit</a>
-  </div>
-</div>
+  <a href="{% url 'admin_kegiatan_data' %}" class="breadcrumb"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg>Semua kegiatan</a>
 
-<!-- Header card -->
-<div class="card" style="padding:20px;margin-bottom:20px">
-  <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <code style="font-size:11px;background:var(--c-bg-subtle);padding:2px 7px;border-radius:4px;color:var(--c-text-secondary)">{{ kegiatan.kode }}</code>
-    {% if kegiatan.jenis_kegiatan %}
-    <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--c-primary-light);color:var(--c-primary)">{{ kegiatan.jenis_kegiatan }}</span>
-    {% endif %}
-    {% if kegiatan.sedang_berlangsung %}
-      <span class="status-pill" style="background:var(--c-success-light);color:var(--c-success)">Berlangsung</span>
-    {% elif kegiatan.sudah_selesai %}
-      <span class="status-pill" style="background:var(--c-bg-subtle);color:var(--c-text-muted)">Selesai</span>
-    {% else %}
-      <span class="status-pill" style="background:var(--c-warn-light);color:#92400E">Akan datang</span>
-    {% endif %}
-  </div>
-  <h2 style="font-size:18px;font-weight:700;letter-spacing:-.02em;margin-bottom:16px">{{ kegiatan.judul }}</h2>
-
-  <div class="detail-row">
-    <span class="detail-key">Tanggal</span>
-    <span class="detail-val">
-      {% if kegiatan.tanggal_mulai|date:"d M Y" == kegiatan.tanggal_selesai|date:"d M Y" %}
-        {{ kegiatan.tanggal_mulai|date:"d M Y" }}, {{ kegiatan.tanggal_mulai|date:"H:i" }}–{{ kegiatan.tanggal_selesai|date:"H:i" }}
-      {% else %}
-        {{ kegiatan.tanggal_mulai|date:"d M Y" }} – {{ kegiatan.tanggal_selesai|date:"d M Y" }}
-      {% endif %}
-    </span>
-  </div>
-  {% if kegiatan.lokasi %}
-  <div class="detail-row">
-    <span class="detail-key">Lokasi</span>
-    <span class="detail-val">{{ kegiatan.lokasi }}</span>
-  </div>
-  {% endif %}
-  <div class="detail-row">
-    <span class="detail-key">Sumber</span>
-    <span class="detail-val">{% if kegiatan.sumber == 'otomatis' %}API{% elif kegiatan.sumber == 'manual-admin' %}Manual — Admin{% else %}Manual — Anggota{% endif %}</span>
-  </div>
-  <div class="detail-row">
-    <span class="detail-key">Komunitas</span>
-    <span class="detail-val">
-      {% for k in kegiatan.komunitas.all %}
-        <span class="kom-chip">{{ k.nama_komunitas }}</span>
-      {% empty %}—{% endfor %}
-    </span>
-  </div>
-  {% if kegiatan.deskripsi %}
-  <div class="detail-row" style="align-items:flex-start">
-    <span class="detail-key" style="padding-top:2px">Deskripsi</span>
-    <span class="detail-val" style="white-space:pre-line">{{ kegiatan.deskripsi }}</span>
-  </div>
-  {% endif %}
-  {% if kegiatan.links.exists %}
-  <div class="detail-row" style="align-items:flex-start">
-    <span class="detail-key" style="padding-top:2px">Tautan</span>
-    <span class="detail-val">
-      {% for link in kegiatan.links.all %}
-      <div style="margin-bottom:4px">
-        <a href="{{ link.url }}" target="_blank" rel="noopener" style="font-size:13px">{{ link.judul_link }}</a>
+  <section class="card">
+    <div class="card-head" style="align-items:flex-start">
+      <div>
+        <div class="kg-head-meta">
+          <span class="code">{{ kegiatan.kode }}</span>
+          {% if kegiatan.sedang_berlangsung %}<span class="kg-state is-aktif">Berlangsung</span>
+          {% elif kegiatan.sudah_selesai %}<span class="kg-state is-selesai">Selesai</span>
+          {% else %}<span class="kg-state is-datang">Akan datang</span>{% endif %}
+          {% if kegiatan.jenis_kegiatan %}<span class="chip chip-sm"><span>{{ kegiatan.jenis_kegiatan }}</span></span>{% endif %}
+        </div>
+        <h1 class="kg-title">{{ kegiatan.judul }}</h1>
       </div>
-      {% endfor %}
-    </span>
-  </div>
-  {% endif %}
-</div>
+      <div class="page-header-actions">
+        <button id="btn-imp" type="button" class="btn btn-secondary"><svg class="ico" aria-hidden="true"><use href="#i-unggah"/></svg>Impor peserta</button>
+        <a href="{% url 'admin_kegiatan_edit' kegiatan.kode %}" class="btn btn-primary"><svg class="ico" aria-hidden="true"><use href="#i-ubah"/></svg>Ubah kegiatan</a>
+      </div>
+    </div>
 
-<!-- Peserta -->
-<div class="card" style="padding:20px;margin-bottom:20px">
-  <p class="detail-section-title">Peserta <span style="font-weight:400;text-transform:none;letter-spacing:0">({{ kegiatan.peserta_count }} terverifikasi)</span></p>
-  {% if peserta_page %}
-  <div class="tbl-wrap">
-    <table style="min-width:480px">
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>Peran</th>
-          <th>Status</th>
-          <th>Catatan</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in peserta_page %}
-        <tr>
-          <td>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div class="mini-av">{{ p.member.display_label|first|upper }}</div>
-              <div>
-                <div style="font-size:13px;font-weight:600">{{ p.member.display_label }}</div>
-                {% if p.member.wikimedia_username %}<div class="meta">@{{ p.member.wikimedia_username }}</div>{% endif %}
-              </div>
-            </div>
-          </td>
-          <td><span class="role-chip">{{ p.get_role_display }}</span></td>
-          <td>
-            <span class="riwayat-status rs-{{ p.status }}">
-              {% if p.status == 'terverifikasi' %}Terverifikasi{% elif p.status == 'ditolak' %}Ditolak{% else %}Menunggu{% endif %}
-            </span>
-          </td>
-          <td class="meta" style="font-size:12px">{{ p.catatan|default:"—" }}</td>
-        </tr>
+    <div class="detail-row">
+      <span class="detail-key">Tanggal</span>
+      <span class="detail-val num">
+        {% if kegiatan.tanggal_mulai|date:"d M Y" == kegiatan.tanggal_selesai|date:"d M Y" %}
+          {{ kegiatan.tanggal_mulai|date:"d M Y" }}, {{ kegiatan.tanggal_mulai|date:"H.i" }}-{{ kegiatan.tanggal_selesai|date:"H.i" }}
+        {% else %}
+          {{ kegiatan.tanggal_mulai|date:"d M Y" }} - {{ kegiatan.tanggal_selesai|date:"d M Y" }}
+        {% endif %}
+      </span>
+    </div>
+    {% if kegiatan.lokasi %}
+    <div class="detail-row"><span class="detail-key">Lokasi</span><span class="detail-val">{{ kegiatan.lokasi }}</span></div>
+    {% endif %}
+    <div class="detail-row"><span class="detail-key">Sumber</span><span class="detail-val">{{ kegiatan.sumber|sumber_label }}</span></div>
+    <div class="detail-row">
+      <span class="detail-key">Komunitas</span>
+      <span class="detail-val">
+        {% if kegiatan.komunitas.all %}<span class="chips">{% for k in kegiatan.komunitas.all %}<span class="chip chip-sm"><span>{{ k.nama_komunitas }}</span></span>{% endfor %}</span>
+        {% else %}Belum ada komunitas terkait{% endif %}
+      </span>
+    </div>
+    {% if kegiatan.deskripsi %}
+    <div class="detail-row"><span class="detail-key">Deskripsi</span><span class="detail-val">{{ kegiatan.deskripsi|linebreaksbr }}</span></div>
+    {% endif %}
+    {% if kegiatan.links.exists %}
+    <div class="detail-row">
+      <span class="detail-key">Tautan</span>
+      <span class="detail-val links">
+        {% for link in kegiatan.links.all %}
+        <a href="{{ link.url }}" target="_blank" rel="noopener">{{ link.judul_link }}<svg class="ico ico-sm" aria-hidden="true"><use href="#i-luar"/></svg></a>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% if peserta_paginator.num_pages > 1 %}
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:13px">
-    <span class="meta">{{ peserta_page.start_index }}–{{ peserta_page.end_index }} dari {{ peserta_paginator.count }} peserta</span>
-    <div style="display:flex;gap:4px">
-      {% if peserta_page.has_previous %}
-        <a href="?peserta_page={{ peserta_page.previous_page_number }}" class="btn btn-secondary btn-sm">&larr;</a>
-      {% endif %}
-      <span style="padding:4px 10px;font-size:12px;color:var(--c-text-muted)">{{ peserta_page.number }} / {{ peserta_paginator.num_pages }}</span>
-      {% if peserta_page.has_next %}
-        <a href="?peserta_page={{ peserta_page.next_page_number }}" class="btn btn-secondary btn-sm">&rarr;</a>
-      {% endif %}
+      </span>
     </div>
-  </div>
-  {% endif %}
-  {% else %}
-  <p class="meta">Belum ada peserta.</p>
-  {% endif %}
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2 class="detail-section-title">Peserta <span>{{ kegiatan.peserta_count }} terverifikasi</span></h2>
+    {% if peserta_page %}
+    <div class="tbl-wrap">
+      <table style="min-width:620px">
+        <thead>
+          <tr>
+            <th scope="col">Nama</th>
+            <th scope="col">Peran</th>
+            <th scope="col">Status</th>
+            <th scope="col">Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in peserta_page %}
+          <tr>
+            <td>
+              <div class="who">
+                <span class="mini-av" aria-hidden="true">{{ p.member.display_label|initials }}</span>
+                <div>
+                  <a href="{% url 'admin_anggota_detail' p.member.pk %}" style="font-weight:700;color:var(--ink);text-decoration:none">{{ p.member.display_label }}</a>
+                  {% if p.member.wikimedia_username %}<div class="code">@{{ p.member.wikimedia_username }}</div>{% endif %}
+                </div>
+              </div>
+            </td>
+            <td><span class="chip chip-sm"><svg class="ico" aria-hidden="true"><use href="#{{ p.role|role_icon }}"/></svg>{{ p.get_role_display }}</span></td>
+            <td>
+              {% if p.status == 'terverifikasi' %}<span class="st st-ok"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg>Terverifikasi</span>
+              {% elif p.status == 'ditolak' %}<span class="st st-no"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg>Ditolak</span>
+              {% else %}<span class="st st-wait"><svg class="ico" aria-hidden="true"><use href="#i-jam"/></svg>Menunggu verifikasi</span>{% endif %}
+            </td>
+            <td class="meta">{{ p.catatan|default:"" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if peserta_paginator.num_pages > 1 %}
+    <div class="peserta-foot">
+      <span class="meta">Menampilkan {{ peserta_page.start_index }}-{{ peserta_page.end_index }} dari {{ peserta_paginator.count }} peserta</span>
+      <div class="pagination">
+        {% if peserta_page.has_previous %}
+        <a href="?peserta_page={{ peserta_page.previous_page_number }}" class="page-btn" aria-label="Halaman sebelumnya"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg></a>
+        {% endif %}
+        <span class="meta num" style="padding:0 8px">{{ peserta_page.number }} / {{ peserta_paginator.num_pages }}</span>
+        {% if peserta_page.has_next %}
+        <a href="?peserta_page={{ peserta_page.next_page_number }}" class="page-btn" aria-label="Halaman berikutnya"><svg class="ico" aria-hidden="true"><use href="#i-kanan"/></svg></a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+      <strong>Belum ada peserta.</strong>
+      <p>Impor daftar peserta dari file Excel atau CSV, atau tunggu anggota mencatat kegiatan ini dari profil mereka.</p>
+    </div>
+    {% endif %}
+  </section>
 </div>
 
-</div>
-
-<!-- ===================== IMPORT MODAL ===================== -->
-<div id="imp-modal" style="display:none;position:fixed;inset:0;z-index:9998;align-items:center;justify-content:center;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);padding:16px">
-<div id="imp-box" style="background:var(--c-bg-card);border-radius:var(--radius-lg);width:100%;max-width:780px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.18)">
-
-  <!-- Header -->
-  <div style="padding:20px 24px 16px;border-bottom:1px solid var(--c-border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-    <div>
-      <div style="font-size:15px;font-weight:700">Import Peserta</div>
-      <div style="font-size:12px;color:var(--c-text-muted);margin-top:2px" id="imp-subtitle">Unggah file Excel atau CSV</div>
-    </div>
-    <!-- Step indicator -->
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-      {% for n in "123" %}<span class="imp-dot" id="imp-dot-{{ n }}" style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--c-bg-subtle);color:var(--c-text-muted)">{{ n }}</span>{% if not forloop.last %}<span style="width:20px;height:1px;background:var(--c-border)"></span>{% endif %}{% endfor %}
-    </div>
-    <button id="imp-close" style="background:none;border:none;cursor:pointer;color:var(--c-text-muted);padding:4px;border-radius:var(--radius-sm);display:flex" aria-label="Tutup">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-
-  <!-- Body (scrollable) -->
-  <div style="flex:1;overflow-y:auto;padding:24px">
-
-    <!-- STEP 1: Upload -->
-    <div id="imp-s1">
-      <div id="imp-dropzone" style="border:2px dashed var(--c-border);border-radius:var(--radius);padding:40px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Seret file ke sini atau klik untuk memilih</div>
-        <div class="meta">Format: .xlsx, .xls, .csv</div>
-        <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" style="display:none">
-      </div>
-      <div id="imp-parse-err" style="display:none;margin-top:12px;padding:10px 14px;background:var(--c-danger-light);color:var(--c-danger);border-radius:var(--radius);font-size:13px"></div>
-    </div>
-
-    <!-- STEP 2: Column mapping -->
-    <div id="imp-s2" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;padding:10px 14px;background:var(--c-bg-subtle);border-radius:var(--radius)">
-        <input type="checkbox" id="imp-has-header" checked style="width:auto">
-        <label for="imp-has-header" style="font-size:13px;cursor:pointer">Baris pertama adalah nama kolom (header)</label>
-      </div>
-      <p style="font-size:13px;color:var(--c-text-secondary);margin-bottom:14px">Pilih kolom mana yang berisi <strong>Nama</strong> dan <strong>Email</strong> peserta:</p>
-      <div id="imp-col-wrap" style="display:flex;flex-wrap:wrap;gap:10px"></div>
-      <div id="imp-s2-err" style="display:none;margin-top:12px;font-size:12px;color:var(--c-danger)"></div>
-    </div>
-
-    <!-- STEP 3: Preview rows -->
-    <div id="imp-s3" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <button id="imp-toggle-all" class="btn btn-secondary btn-sm">Pilih semua</button>
-        <select id="imp-bulk-role" style="font-size:13px;padding:5px 8px;border:1px solid var(--c-border);border-radius:var(--radius-sm);background:var(--c-bg-card)">
-          <option value="peserta">Peserta</option>
-          <option value="pelatih">Pelatih</option>
-          <option value="panitia">Panitia</option>
-          <option value="juri">Juri</option>
-          <option value="narasumber">Narasumber</option>
-          <option value="penanggung_jawab">Penanggung Jawab</option>
-          <option value="lainnya">Lainnya</option>
-        </select>
-        <button id="imp-apply-role" class="btn btn-secondary btn-sm">Terapkan ke semua</button>
-        <span id="imp-sel-count" style="margin-left:auto;font-size:12px;color:var(--c-text-muted)"></span>
-      </div>
-      <div style="border:1px solid var(--c-border);border-radius:var(--radius);overflow:hidden">
-        <div style="overflow-x:auto">
-        <table style="min-width:500px">
-          <thead style="background:var(--c-bg-subtle)">
-            <tr>
-              <th style="width:36px"><input type="checkbox" id="imp-check-all" style="width:auto"></th>
-              <th>Nama</th>
-              <th>Email</th>
-              <th>No. HP</th>
-              <th style="width:160px">Peran</th>
-            </tr>
-          </thead>
-          <tbody id="imp-tbody"></tbody>
-        </table>
+<div id="imp-modal" class="sheet-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="imp-title">
+  <div id="imp-box" class="sheet-modal-box">
+    <div class="sheet-modal-head">
+      <div>
+        <div class="sheet-modal-title" id="imp-title">Impor peserta</div>
+        <div id="imp-subtitle" class="meta">Unggah file Excel (.xlsx, .xls) atau CSV</div>
+        <div class="imp-steps" aria-hidden="true">
+          <span class="imp-step"><span class="imp-dot" id="imp-dot-1">1</span>Unggah</span><span class="imp-sep"></span>
+          <span class="imp-step"><span class="imp-dot" id="imp-dot-2">2</span>Cocokkan kolom</span><span class="imp-sep"></span>
+          <span class="imp-step"><span class="imp-dot" id="imp-dot-3">3</span>Pilih peserta</span>
         </div>
       </div>
+      <button id="imp-close" type="button" class="icon-btn" aria-label="Tutup"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
     </div>
 
-    <!-- STEP 4: Result -->
-    <div id="imp-s4" style="display:none;text-align:center;padding:20px 0">
-      <div id="imp-result-icon" style="margin-bottom:16px"></div>
-      <div id="imp-result-title" style="font-size:16px;font-weight:700;margin-bottom:8px"></div>
-      <div id="imp-result-body" style="font-size:13px;color:var(--c-text-secondary);line-height:1.8"></div>
+    <div class="sheet-modal-body">
+      <div id="imp-s1">
+        <div id="imp-dropzone" role="button" tabindex="0" aria-describedby="imp-dz-hint">
+          <svg class="ico" aria-hidden="true"><use href="#i-unggah"/></svg>
+          <div style="font-weight:800">Seret file ke sini, atau pilih file</div>
+          <div class="meta" id="imp-dz-hint">Format .xlsx, .xls, atau .csv. Baris pertama sebaiknya berisi nama kolom.</div>
+          <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" style="display:none">
+        </div>
+        <div id="imp-parse-err" class="imp-err" style="display:none" role="alert"></div>
+      </div>
+
+      <div id="imp-s2" style="display:none">
+        <label style="display:flex;align-items:center;gap:10px;min-height:var(--tap);font-size:var(--t-14);font-weight:600;cursor:pointer">
+          <input type="checkbox" id="imp-has-header" checked>
+          Baris pertama berisi nama kolom
+        </label>
+        <p style="margin:var(--s-3) 0;font-size:var(--t-14)">Kolom mana yang berisi <strong>nama</strong> dan <strong>email</strong> peserta?</p>
+        <div id="imp-col-wrap"></div>
+        <div id="imp-s2-err" class="imp-err" style="display:none" role="alert"></div>
+      </div>
+
+      <div id="imp-s3" style="display:none">
+        <div class="imp-tools">
+          <button id="imp-toggle-all" type="button" class="btn btn-secondary btn-sm">Pilih semua</button>
+          <label class="sr-only" for="imp-bulk-role">Peran untuk semua baris</label>
+          <select id="imp-bulk-role">
+            <option value="peserta">Peserta</option>
+            <option value="pelatih">Pelatih</option>
+            <option value="panitia">Panitia</option>
+            <option value="juri">Juri</option>
+            <option value="narasumber">Narasumber</option>
+            <option value="penanggung_jawab">Penanggung Jawab</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+          <button id="imp-apply-role" type="button" class="btn btn-secondary btn-sm">Terapkan ke semua</button>
+          <span id="imp-sel-count" class="meta"></span>
+        </div>
+        <div class="imp-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:44px;text-align:center"><input type="checkbox" id="imp-check-all" aria-label="Pilih semua baris"></th>
+                <th>Nama</th>
+                <th>Email</th>
+                <th>Nomor HP</th>
+                <th style="width:170px">Peran</th>
+              </tr>
+            </thead>
+            <tbody id="imp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="imp-s4" style="display:none">
+        <div id="imp-result-icon"></div>
+        <div id="imp-result-title"></div>
+        <div id="imp-result-body"></div>
+      </div>
     </div>
 
-  </div>
-
-  <!-- Footer -->
-  <div id="imp-footer" style="padding:16px 24px;border-top:1px solid var(--c-border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0">
-    <button id="imp-btn-cancel" class="btn btn-secondary btn-sm">Batal</button>
-    <button id="imp-btn-next2" class="btn btn-primary btn-sm" style="display:none" disabled>Lanjut</button>
-    <button id="imp-btn-next3" class="btn btn-primary btn-sm" style="display:none" disabled>Import</button>
-    <button id="imp-btn-done" class="btn btn-primary btn-sm" style="display:none">Tutup</button>
+    <div id="imp-footer" class="sheet-modal-foot" style="justify-content:flex-end">
+      <button id="imp-btn-cancel" type="button" class="btn btn-secondary">Batal</button>
+      <button id="imp-btn-next2" type="button" class="btn btn-primary" style="display:none" disabled>Lanjut</button>
+      <button id="imp-btn-next3" type="button" class="btn btn-primary" style="display:none" disabled>Impor</button>
+      <button id="imp-btn-done" type="button" class="btn btn-primary" style="display:none">Selesai</button>
+    </div>
   </div>
 </div>
-</div>
-
-<style>
-  .imp-col-card {
-    border:1px solid var(--c-border);border-radius:var(--radius);padding:12px;
-    width:180px;flex-shrink:0;background:var(--c-bg-card);
-  }
-  .imp-col-card-name {
-    font-size:12px;font-weight:600;color:var(--c-text);margin-bottom:6px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-  .imp-col-samples {
-    font-size:11px;color:var(--c-text-muted);margin-bottom:8px;
-    min-height:36px;line-height:1.6;
-  }
-  .imp-col-samples span { display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-  .imp-col-select {
-    width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--c-border);
-    border-radius:var(--radius-sm);background:var(--c-bg-card);color:var(--c-text);
-  }
-  .imp-col-card.mapped-nama  { border-color:var(--c-primary);background:var(--c-primary-light); }
-  .imp-col-card.mapped-email { border-color:var(--c-success);background:var(--c-success-light); }
-  .imp-col-card.mapped-hp    { border-color:#D97706;background:var(--c-warn-light); }
-  #imp-dropzone:hover,#imp-dropzone.drag-over { border-color:var(--c-primary);background:var(--c-primary-light); }
-  @media (max-width:640px) {
-    .imp-col-card { width:140px; }
-    .detail-key { width:100px; }
-  }
-</style>
 
 <script>
 (function(){
@@ -355,10 +305,11 @@
     [1,2,3].forEach(i => {
       const d = document.getElementById('imp-dot-'+i);
       d.style.background = i <= n ? 'var(--c-primary)' : 'var(--c-bg-subtle)';
-      d.style.color       = i <= n ? '#fff' : 'var(--c-text-muted)';
+      d.style.color       = i <= n ? 'var(--on-primary)' : 'var(--c-text-muted)';
+      d.closest('.imp-step').classList.toggle('is-on', i <= n);
     });
-    const labels = ['Unggah file','Petakan kolom','Pilih & atur peserta'];
-    subtitle.textContent = labels[Math.min(n,3)-1];
+    const labels = ['Langkah 1 dari 3: unggah file','Langkah 2 dari 3: cocokkan kolom','Langkah 3 dari 3: pilih peserta'];
+    subtitle.textContent = n === 4 ? 'Selesai' : labels[Math.min(n,3)-1];
   }
 
   function openModal() {
@@ -397,17 +348,17 @@
     const errEl = document.getElementById('imp-parse-err');
     errEl.style.display = 'none';
     const reader = new FileReader();
-    reader.onerror = () => { errEl.textContent = 'Gagal membaca file.'; errEl.style.display = ''; };
+    reader.onerror = () => { errEl.textContent = 'File tidak bisa dibaca. Pastikan formatnya .xlsx, .xls, atau .csv, lalu coba lagi.'; errEl.style.display = ''; };
     reader.onload = e => {
       try {
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
         const ws = wb.Sheets[wb.SheetNames[0]];
         rawRows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-        if (!rawRows.length) throw new Error('File kosong');
+        if (!rawRows.length) throw new Error('file kosong');
         buildStep2();
         setStep(2);
       } catch(err) {
-        errEl.textContent = 'Gagal memproses file: ' + err.message;
+        errEl.textContent = 'Isi file tidak bisa diproses. Pastikan formatnya .xlsx, .xls, atau .csv dan baris pertamanya berisi data. (' + err.message + ')';
         errEl.style.display = '';
       }
     };
@@ -446,7 +397,7 @@
           <option value="skip">Abaikan</option>
           <option value="nama"${def==='nama'?' selected':''}>Nama</option>
           <option value="email"${def==='email'?' selected':''}>Email</option>
-          <option value="hp"${def==='hp'?' selected':''}>No. HP</option>
+          <option value="hp"${def==='hp'?' selected':''}>Nomor HP</option>
         </select>`;
       wrap.appendChild(card);
     }
@@ -484,7 +435,7 @@
     btnNext2.disabled = !ok;
     const errEl = document.getElementById('imp-s2-err');
     errEl.style.display = ok ? 'none' : '';
-    if (!ok) errEl.textContent = 'Pilih minimal satu kolom (Nama atau Email).';
+    if (!ok) errEl.textContent = 'Pilih setidaknya satu kolom sebagai Nama atau Email.';
   }
 
   btnNext2.addEventListener('click', () => {
@@ -518,12 +469,12 @@
     importRows.forEach((row, i) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="text-align:center"><input type="checkbox" class="imp-row-chk"${row.selected?' checked':''} style="width:auto"></td>
+        <td style="text-align:center"><input type="checkbox" class="imp-row-chk"${row.selected?' checked':''} aria-label="Pilih baris ${i+1}"></td>
         <td style="font-size:13px">${row.nama  || '<span class="meta">—</span>'}</td>
         <td style="font-size:13px">${row.email || '<span class="meta">—</span>'}</td>
         <td style="font-size:13px">${row.hp    || '<span class="meta">—</span>'}</td>
         <td>
-          <select class="imp-row-role" style="font-size:12px;padding:4px 6px;border:1px solid var(--c-border);border-radius:4px;background:var(--c-bg-card);width:100%">
+          <select class="imp-row-role" aria-label="Peran baris ${i+1}">
             ${ROLES.map(([v,l])=>`<option value="${v}"${v==='peserta'?' selected':''}>${l}</option>`).join('')}
           </select>
         </td>`;
@@ -545,7 +496,7 @@
     const sel = importRows.filter(r => r.selected).length;
     document.getElementById('imp-sel-count').textContent = sel + ' dari ' + importRows.length + ' baris dipilih';
     btnNext3.disabled = sel === 0;
-    btnNext3.textContent = sel > 0 ? 'Import ' + sel + ' peserta' : 'Import';
+    btnNext3.textContent = sel > 0 ? 'Impor ' + sel + ' peserta' : 'Impor';
   }
 
   document.getElementById('imp-check-all').addEventListener('change', e => {
@@ -573,7 +524,7 @@
     const rows = importRows.filter(r => r.selected);
     if (!rows.length) return;
     btnNext3.disabled = true;
-    btnNext3.textContent = 'Mengimpor…';
+    btnNext3.textContent = 'Sedang mengimpor…';
 
     fetch("{% url 'admin_kegiatan_import' kegiatan.kode %}", {
       method: 'POST',
@@ -590,8 +541,8 @@
     })
     .catch(() => {
       btnNext3.disabled = false;
-      btnNext3.textContent = 'Import ' + rows.length + ' peserta';
-      alert('Terjadi kesalahan. Silakan coba lagi.');
+      btnNext3.textContent = 'Impor ' + rows.length + ' peserta';
+      alert('Impor belum berhasil. Periksa koneksi internet, lalu coba lagi.');
     });
   });
 
@@ -602,18 +553,18 @@
     const ok = data.ok && data.imported > 0;
 
     iconEl.innerHTML = ok
-      ? '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--c-success)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>'
-      : '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--c-text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+      ? '<span class="cap cap-lg" style="margin:0 auto"><svg class="ico"><use href="#i-cek"/></svg></span>'
+      : '<span class="cap cap-lg" style="margin:0 auto;color:var(--muted)"><svg class="ico"><use href="#i-info"/></svg></span>';
 
     titleEl.textContent = data.imported > 0
-      ? data.imported + ' peserta berhasil diimpor'
+      ? data.imported + ' peserta ditambahkan ke kegiatan ini'
       : 'Tidak ada peserta baru yang diimpor';
 
     let lines = [];
     if (data.skipped_duplicate > 0)
-      lines.push(data.skipped_duplicate + ' sudah terdaftar di kegiatan ini (dilewati)');
+      lines.push(data.skipped_duplicate + ' orang sudah ada di daftar peserta, jadi dilewati.');
     if (data.skipped_no_data > 0)
-      lines.push(data.skipped_no_data + ' baris tidak memiliki email (dilewati)');
+      lines.push(data.skipped_no_data + ' baris tidak punya email, jadi dilewati.');
     bodyEl.innerHTML = lines.join('<br>');
   }
 
@@ -624,10 +575,11 @@
 
 })();
 </script>
-
-<style>
-  @media (max-width:640px) {
-    .detail-key { width:100px; }
-  }
-</style>
+<script>
+  // Dropzone bisa dibuka dengan keyboard
+  (function() {
+    var dz = document.getElementById('imp-dropzone');
+    if (dz) dz.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dz.click(); } });
+  })();
+</script>
 {% endblock %}

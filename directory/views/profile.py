@@ -1,3 +1,4 @@
+import logging
 import traceback
 from datetime import date, datetime, time
 
@@ -12,6 +13,8 @@ from directory.wikimedia import sync_contributions
 from .utils import get_session_member, store_sync_result
 
 
+logger = logging.getLogger(__name__)
+
 def index(request):
     member = get_session_member(request)
     return render(request, 'directory/index.html', {
@@ -23,7 +26,7 @@ def index(request):
 def profile(request):
     member = get_session_member(request)
     if not member:
-        messages.info(request, 'Silakan login terlebih dahulu.')
+        messages.info(request, 'Masuk dulu untuk membuka halaman itu.')
         return redirect('index')
 
     sync_result = request.session.pop('last_sync_result', None)
@@ -73,7 +76,7 @@ def profile(request):
 
     incomplete = []
     if not member.display_name:
-        incomplete.append({'text': 'Tambah nama lengkap', 'url': reverse('profile_edit')})
+        incomplete.append({'text': 'Isi nama lengkap', 'url': reverse('profile_edit')})
     if not member.bio:
         incomplete.append({'text': 'Tulis bio singkat', 'url': reverse('profile_edit')})
     if not (member.skills and member.skills.strip()):
@@ -105,13 +108,14 @@ def resync(request):
         return redirect('index')
     cache_key = f'resync_cooldown:{member.pk}'
     if cache.get(cache_key):
-        messages.warning(request, 'Sinkronisasi baru saja dilakukan. Tunggu 5 menit sebelum sync ulang.')
+        messages.warning(request, 'Suntinganmu baru saja disinkronkan. Kamu bisa sinkronkan lagi setelah 5 menit.')
         return redirect('profile')
     cache.set(cache_key, True, _RESYNC_COOLDOWN)
     try:
         store_sync_result(request, sync_contributions(member))
     except Exception as e:
-        messages.error(request, f'Sync gagal: {e}')
+        logger.warning('Sinkronisasi suntingan gagal untuk anggota %s: %s', member.pk, e)
+        messages.error(request, 'Sinkronisasi gagal. Coba lagi beberapa menit lagi.')
         request.session['last_sync_error'] = traceback.format_exc()
     return redirect('profile')
 
@@ -119,7 +123,7 @@ def resync(request):
 def profile_edit(request):
     member = get_session_member(request)
     if not member:
-        messages.info(request, 'Silakan login terlebih dahulu.')
+        messages.info(request, 'Masuk dulu untuk membuka halaman itu.')
         return redirect('index')
 
     if request.method == 'POST':
@@ -137,7 +141,7 @@ def profile_edit(request):
             try:
                 member.joined_wmid_at = date.fromisoformat(joined_raw)
             except ValueError:
-                messages.error(request, 'Format tanggal tidak valid.')
+                messages.error(request, 'Tanggal belum lengkap atau formatnya salah.')
         else:
             member.joined_wmid_at = None
 
@@ -151,13 +155,13 @@ def profile_edit(request):
             new_email = request.POST.get('email', '').strip().lower()
             if new_email != member.email:
                 if new_email and Member.objects.filter(email=new_email).exclude(pk=member.pk).exists():
-                    messages.error(request, 'Email sudah digunakan oleh akun lain.')
+                    messages.error(request, 'Email ini sudah dipakai akun lain. Pakai email yang berbeda.')
                     return redirect('profile_edit')
                 member.email = new_email
                 update_fields.append('email')
 
         member.save(update_fields=update_fields)
-        messages.success(request, 'Profil berhasil diperbarui.')
+        messages.success(request, 'Profil tersimpan.')
         return redirect('profile')
 
     DEFAULT_GROUPS = {'*', 'user'}
@@ -202,7 +206,7 @@ def riwayat_cancel(request, entry_id):
 def riwayat_catat(request):
     member = get_session_member(request)
     if not member:
-        messages.info(request, 'Silakan login terlebih dahulu.')
+        messages.info(request, 'Masuk dulu untuk membuka halaman itu.')
         return redirect('index')
 
     if request.method == 'POST':
@@ -223,9 +227,9 @@ def riwayat_catat(request):
                 defaults={'role': role, 'catatan': catatan, 'status': KegiatanAnggota.STATUS_MENUNGGU, 'added_by': member},
             )
             if created:
-                messages.success(request, f'Pendaftaran ke "{kegiatan.judul}" dikirim, menunggu verifikasi admin.')
+                messages.success(request, f'Catatanmu di {kegiatan.judul} terkirim. Pengurus akan memverifikasinya.')
             else:
-                messages.info(request, 'Kamu sudah terdaftar di kegiatan ini.')
+                messages.info(request, 'Kegiatan ini sudah ada di riwayatmu.')
         else:
             judul       = request.POST.get('judul', '').strip()[:255]
             mulai_str   = request.POST.get('tanggal_mulai', '').strip()
@@ -233,13 +237,13 @@ def riwayat_catat(request):
             lokasi      = request.POST.get('lokasi', '').strip()[:255]
 
             if not judul or not mulai_str:
-                messages.error(request, 'Judul dan tanggal mulai wajib diisi.')
+                messages.error(request, 'Nama kegiatan dan tanggal mulai perlu diisi.')
                 return redirect('riwayat_catat')
 
             try:
                 tgl_mulai = datetime.combine(date.fromisoformat(mulai_str), time())
             except (ValueError, TypeError):
-                messages.error(request, 'Format tanggal mulai tidak valid.')
+                messages.error(request, 'Tanggal mulai belum lengkap atau formatnya salah.')
                 return redirect('riwayat_catat')
 
             if KegiatanAnggota.objects.filter(
@@ -248,17 +252,17 @@ def riwayat_catat(request):
                 kegiatan__tanggal_mulai__date=tgl_mulai.date(),
                 kegiatan__sumber=Kegiatan.SUMBER_ANGGOTA,
             ).exists():
-                messages.info(request, 'Kamu sudah pernah mencatat kegiatan serupa pada tanggal yang sama.')
+                messages.info(request, 'Kamu sudah mencatat kegiatan dengan nama dan tanggal yang sama. Cek riwayatmu.')
                 return redirect('profile')
 
             if selesai_str:
                 try:
                     tgl_selesai = datetime.combine(date.fromisoformat(selesai_str), time())
                 except (ValueError, TypeError):
-                    messages.error(request, 'Format tanggal selesai tidak valid.')
+                    messages.error(request, 'Tanggal selesai belum lengkap atau formatnya salah.')
                     return redirect('riwayat_catat')
                 if tgl_selesai < tgl_mulai:
-                    messages.error(request, 'Tanggal selesai tidak boleh sebelum tanggal mulai.')
+                    messages.error(request, 'Tanggal selesai lebih awal dari tanggal mulai. Periksa lagi kedua tanggalnya.')
                     return redirect('riwayat_catat')
             else:
                 tgl_selesai = tgl_mulai
@@ -286,7 +290,7 @@ def riwayat_catat(request):
                 role=role, catatan=catatan, status=KegiatanAnggota.STATUS_MENUNGGU, added_by=member,
             )
 
-            messages.success(request, f'Kegiatan "{kegiatan.judul}" dicatat, menunggu verifikasi admin.')
+            messages.success(request, f'{kegiatan.judul} sudah dicatat. Pengurus akan memverifikasinya.')
 
         return redirect('profile')
 

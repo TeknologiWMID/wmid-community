@@ -1,169 +1,196 @@
 {% extends "directory/base.html" %}
-{% block title %}Komunitas — Admin WMID{% endblock %}
+{% load directory_tags %}
+{% block title %}Komunitas · Pengurus WMID{% endblock %}
+{% block body_class %}density-meja{% endblock %}
+
+{% block head %}
+<style>
+  .tbl-kom { min-width: 900px; }
+  .tbl-kom.is-per-jenis { min-width: 1400px; }
+  .tbl-kom .col-jenis-detail { display: none; }
+  .tbl-kom.is-per-jenis .col-jenis-detail { display: table-cell; }
+  .tbl-kom.is-per-jenis .col-sebaran { display: none; }
+  .sebaran { display:flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--t-13); color: var(--ink-2); max-width: 320px; }
+  .sebaran b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .tbl-tools { display:flex; justify-content:flex-end; padding: var(--s-2) var(--s-4) 0; }
+  @media (max-width: 720px) { .tbl-tools { display: none; } }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="page-content">
-{% include "directory/_admin_nav.html" %}
+  {% include "directory/_admin_nav.html" %}
 
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Komunitas</h1>
-    <p style="font-size:13px;color:var(--c-text-muted);margin-top:2px">{{ page_obj.paginator.count }} komunitas ditemukan</p>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Komunitas</h1>
+      <p class="page-sub">{% if q or jenis %}{{ page_obj.paginator.count }} komunitas cocok dengan saringan{% else %}{{ page_obj.paginator.count }} komunitas{% endif %}</p>
+    </div>
+    <div class="page-header-actions">
+      <button type="button" id="btn-ekspor" class="btn btn-secondary" aria-label="Ekspor data"><svg class="ico" aria-hidden="true"><use href="#i-unduh"/></svg><span class="btn-label-m">Ekspor data</span></button>
+    </div>
   </div>
-  <button type="button" id="btn-ekspor" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Ekspor data
-  </button>
-</div>
 
-<div class="card" style="padding:20px">
+  <section class="card card-flush" aria-label="Daftar komunitas">
+    <form method="get" class="filter-form" role="search">
+      <div class="form-field input-icon">
+        <label class="sr-only" for="f-q">Cari nama komunitas</label>
+        <svg class="ico" aria-hidden="true"><use href="#i-cari"/></svg>
+        <input type="search" id="f-q" name="q" value="{{ q }}" placeholder="Cari komunitas" autocomplete="off" oninput="adminSearch(this.form)">
+      </div>
+      <button type="button" class="btn btn-secondary filter-toggle" aria-expanded="false" aria-controls="f-panel">
+        <svg class="ico" aria-hidden="true"><use href="#i-saring"/></svg>Saring
+      </button>
+      <div class="filter-panel" id="f-panel">
+        <div class="filter-sheet-head">
+          <span class="form-label">Saring komunitas</span>
+          <button type="button" class="icon-btn filter-close" aria-label="Tutup"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="form-field filter-field">
+          <label class="form-label" for="f-jenis">Jenis</label>
+          <select id="f-jenis" name="jenis" onchange="adminFilterChange(this)">
+            <option value="">Semua jenis</option>
+            <option value="daerah"   {% if jenis == 'daerah' %}selected{% endif %}>Komunitas Daerah</option>
+            <option value="bahasa"   {% if jenis == 'bahasa' %}selected{% endif %}>Komunitas Bahasa</option>
+            <option value="proyek"   {% if jenis == 'proyek' %}selected{% endif %}>Komunitas Proyek</option>
+            <option value="klubWiki" {% if jenis == 'klubWiki' %}selected{% endif %}>Klub Wiki</option>
+            <option value="lainnya"  {% if jenis == 'lainnya' %}selected{% endif %}>Lainnya</option>
+          </select>
+        </div>
+        <div class="form-field filter-field">
+          <label class="form-label" for="f-sort">Urutkan</label>
+          <select id="f-sort" name="sort" onchange="adminFilterChange(this)">
+            <option value="anggota"      {% if sort == 'anggota' %}selected{% endif %}>Anggota terbanyak</option>
+            <option value="kegiatan"     {% if sort == 'kegiatan' %}selected{% endif %}>Kegiatan terbanyak</option>
+            <option value="kegiatan-asc" {% if sort == 'kegiatan-asc' %}selected{% endif %}>Kegiatan paling sedikit</option>
+            <option value="nama"         {% if sort == 'nama' %}selected{% endif %}>Nama A-Z</option>
+          </select>
+        </div>
+        <div class="filter-apply-row">
+          <a href="{% url 'admin_komunitas' %}" class="btn btn-secondary">Hapus saringan</a>
+          <button type="submit" class="btn btn-primary">Tampilkan hasil</button>
+        </div>
+      </div>
+      {% if q or jenis or sort and sort != 'anggota' %}
+      <a href="{% url 'admin_komunitas' %}" class="btn btn-quiet filter-reset-desktop">Hapus saringan</a>
+      {% endif %}
+    </form>
+    <div class="scrim" id="filter-scrim" hidden></div>
 
-  <form method="get" class="filter-form">
-    <input type="search" name="q" value="{{ q }}" placeholder="Cari nama komunitas…" autocomplete="off" oninput="adminSearch(this.form)">
-    <select name="jenis" onchange="this.form.submit()">
-      <option value="">Semua jenis</option>
-      <option value="daerah"   {% if jenis == 'daerah' %}selected{% endif %}>Komunitas Daerah</option>
-      <option value="bahasa"   {% if jenis == 'bahasa' %}selected{% endif %}>Komunitas Bahasa</option>
-      <option value="proyek"   {% if jenis == 'proyek' %}selected{% endif %}>Komunitas Proyek</option>
-      <option value="klubWiki" {% if jenis == 'klubWiki' %}selected{% endif %}>Klub Wiki</option>
-      <option value="lainnya"  {% if jenis == 'lainnya' %}selected{% endif %}>Lainnya</option>
-    </select>
-    <select name="sort" onchange="this.form.submit()">
-      <option value="anggota"      {% if sort == 'anggota' %}selected{% endif %}>Anggota terbanyak</option>
-      <option value="kegiatan"     {% if sort == 'kegiatan' %}selected{% endif %}>Total kegiatan terbanyak</option>
-      <option value="kegiatan-asc" {% if sort == 'kegiatan-asc' %}selected{% endif %}>Total kegiatan terendah</option>
-      <option value="nama"         {% if sort == 'nama' %}selected{% endif %}>Nama A–Z</option>
-    </select>
-    {% if q or jenis or sort and sort != 'anggota' %}
-    <a href="{% url 'admin_komunitas' %}" class="btn btn-ghost btn-sm">Reset</a>
-    {% endif %}
-  </form>
+    <div class="tbl-tools">
+      <button type="button" class="btn btn-quiet btn-sm" id="toggle-jenis" aria-pressed="false">Tampilkan kolom per jenis</button>
+    </div>
 
-  <div class="tbl-wrap">
-    <table style="min-width:900px">
-      <thead>
-        <tr>
-          <th>Kode</th>
-          <th>Komunitas</th>
-          <th>Jenis</th>
-          <th style="text-align:right">Anggota</th>
-          <th style="text-align:right">Total Kegiatan</th>
-          <th style="text-align:right">WikiLatih</th>
-          <th style="text-align:right">Kopdar</th>
-          <th style="text-align:right">Makrab</th>
-          <th style="text-align:right">Rapat</th>
-          <th style="text-align:right">Mitra</th>
-          <th style="text-align:right">Dana Wiki</th>
-          <th style="text-align:right">Hibah Buku</th>
-          <th style="text-align:right">Rapid Fund</th>
-          <th style="text-align:right">Lainnya</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for k in page_obj %}
-        <tr>
-          <td>
-            <code style="font-size:11px;background:var(--c-bg-subtle);padding:2px 6px;border-radius:4px;color:var(--c-text-secondary)">{{ k.kode }}</code>
-          </td>
-          <td>
-            <div style="display:flex;align-items:center;gap:10px">
-              {% if k.logo %}
-                <img src="{{ k.logo }}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:contain;border:1px solid var(--c-border);background:var(--c-bg-subtle);flex-shrink:0">
-              {% else %}
-                <div style="width:28px;height:28px;border-radius:6px;background:var(--c-primary);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ k.nama_komunitas|first|upper }}</div>
-              {% endif %}
-              <span style="font-weight:600;font-size:13px">{{ k.nama_komunitas }}</span>
+    <div class="tbl-wrap tbl-desktop">
+      <table class="tbl-kom tbl-hover" id="tbl-kom">
+        <thead>
+          <tr>
+            <th scope="col">Komunitas</th>
+            <th scope="col">Jenis</th>
+            <th scope="col" class="num">Anggota</th>
+            <th scope="col" class="num">Kegiatan</th>
+            <th scope="col" class="col-sebaran">Sebaran kegiatan</th>
+            <th scope="col" class="num col-jenis-detail">WikiLatih</th>
+            <th scope="col" class="num col-jenis-detail">Kopdar</th>
+            <th scope="col" class="num col-jenis-detail">Makrab</th>
+            <th scope="col" class="num col-jenis-detail">Rapat</th>
+            <th scope="col" class="num col-jenis-detail">Mitra</th>
+            <th scope="col" class="num col-jenis-detail">Dana Wiki</th>
+            <th scope="col" class="num col-jenis-detail">Hibah Buku</th>
+            <th scope="col" class="num col-jenis-detail">Rapid Fund</th>
+            <th scope="col" class="num col-jenis-detail">Lainnya</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for k in page_obj %}
+          <tr class="row-link">
+            <td>
+              <div class="who">
+                <span class="logo-box" aria-hidden="true">{% if k.logo %}<img src="{{ k.logo }}" alt="" loading="lazy">{% else %}{{ k.nama_komunitas|initials }}{% endif %}</span>
+                <div>
+                  <a class="row-main" href="{% url 'admin_komunitas_detail' k.slug %}">{{ k.nama_komunitas }}</a>
+                  <div class="code">{{ k.kode }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              {% if k.jenis_komunitas %}<span class="chip chip-sm"><svg class="ico" aria-hidden="true"><use href="#{{ k.jenis_komunitas|jenis_icon }}"/></svg><span>{{ k.jenis_label }}</span></span>
+              {% else %}<span class="empty-cell">Belum ditentukan</span>{% endif %}
+            </td>
+            <td class="num"><span class="rj">{{ k.anggota_count }}</span></td>
+            <td class="num"><span class="rj">{{ k.kg_count }}</span></td>
+            <td class="col-sebaran">
+              {% if k.kg_count %}
+              <div class="sebaran">
+                {% if k.kg_wikilatih %}<span>WikiLatih <b>{{ k.kg_wikilatih }}</b></span>{% endif %}
+                {% if k.kg_kopdar %}<span>Kopdar <b>{{ k.kg_kopdar }}</b></span>{% endif %}
+                {% if k.kg_makrab %}<span>Makrab <b>{{ k.kg_makrab }}</b></span>{% endif %}
+                {% if k.kg_rapat %}<span>Rapat <b>{{ k.kg_rapat }}</b></span>{% endif %}
+                {% if k.kg_mitra %}<span>Mitra <b>{{ k.kg_mitra }}</b></span>{% endif %}
+                {% if k.kg_dana_wiki %}<span>Dana Wiki <b>{{ k.kg_dana_wiki }}</b></span>{% endif %}
+                {% if k.kg_hibah_buku %}<span>Hibah Buku <b>{{ k.kg_hibah_buku }}</b></span>{% endif %}
+                {% if k.kg_rapid_fund %}<span>Rapid Fund <b>{{ k.kg_rapid_fund }}</b></span>{% endif %}
+                {% if k.kg_lainnya %}<span>Lainnya <b>{{ k.kg_lainnya }}</b></span>{% endif %}
+              </div>
+              {% else %}<span class="empty-cell">Belum ada kegiatan</span>{% endif %}
+            </td>
+            <td class="num col-jenis-detail">{{ k.kg_wikilatih|default:"0" }}</td>
+            <td class="num col-jenis-detail">{{ k.kg_kopdar|default:"0" }}</td>
+            <td class="num col-jenis-detail">{{ k.kg_makrab|default:"0" }}</td>
+            <td class="num col-jenis-detail">{{ k.kg_rapat|default:"0" }}</td>
+            <td class="num col-jenis-detail">{{ k.kg_mitra|default:"0" }}</td>
+            <td class="num col-jenis-detail">{{ k.kg_dana_wiki|default:"0" }}</td>
+            <td class="num col-jenis-detail">{{ k.kg_hibah_buku|default:"0" }}</td>
+            <td class="num col-jenis-detail">{{ k.kg_rapid_fund|default:"0" }}</td>
+            <td class="num col-jenis-detail">{{ k.kg_lainnya|default:"0" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="14">
+            <div class="empty-state">
+              <strong>Tidak ada komunitas yang cocok.</strong>
+              <p>Coba kata kunci lain, atau hapus saringan untuk melihat semua komunitas.</p>
+              <a href="{% url 'admin_komunitas' %}" class="btn btn-secondary">Hapus saringan</a>
             </div>
-          </td>
-          <td>
-            {% if k.jenis_komunitas %}
-              <span class="jenis-badge jenis-{{ k.jenis_komunitas }}">{{ k.jenis_label }}</span>
-            {% else %}
-              <span class="meta">—</span>
-            {% endif %}
-          </td>
-          <td style="text-align:right;font-weight:700;color:var(--c-primary)">{{ k.anggota_count }}</td>
-          <td style="text-align:right;font-weight:700">{{ k.kg_count }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_wikilatih|default:"—" }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_kopdar|default:"—" }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_makrab|default:"—" }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_rapat|default:"—" }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_mitra|default:"—" }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_dana_wiki|default:"—" }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_hibah_buku|default:"—" }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_rapid_fund|default:"—" }}</td>
-          <td style="text-align:right;color:var(--c-text-secondary)">{{ k.kg_lainnya|default:"—" }}</td>
-          <td style="text-align:right">
-            <a href="{% url 'admin_komunitas_detail' k.slug %}" class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:12px">Detail</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="15" style="text-align:center;padding:32px;color:var(--c-text-muted);font-size:13px">Tidak ada komunitas yang cocok.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-  {% if page_obj.has_other_pages %}
-  <div class="pagination-wrap">
-    <span class="pagination-info">Menampilkan {{ page_obj.start_index }}–{{ page_obj.end_index }} dari {{ page_obj.paginator.count }} komunitas</span>
-    <div class="pagination">
-      {% if page_obj.has_previous %}<a href="?{{ filter_params }}&page={{ page_obj.previous_page_number }}" class="page-btn">&larr;</a>{% else %}<span class="page-btn is-disabled">&larr;</span>{% endif %}
-      {% for p in page_range %}
-        {% if p == '…' %}<span class="page-btn is-ellipsis">…</span>
-        {% elif p == page_obj.number %}<span class="page-btn is-active">{{ p }}</span>
-        {% else %}<a href="?{{ filter_params }}&page={{ p }}" class="page-btn">{{ p }}</a>{% endif %}
+    <ul class="m-list">
+      {% for k in page_obj %}
+      <li>
+        <a class="m-row" href="{% url 'admin_komunitas_detail' k.slug %}">
+          <span class="logo-box" aria-hidden="true">{% if k.logo %}<img src="{{ k.logo }}" alt="" loading="lazy">{% else %}{{ k.nama_komunitas|initials }}{% endif %}</span>
+          <div style="min-width:0">
+            <div class="m-name">{{ k.nama_komunitas }}</div>
+            <div class="m-sub"><span>{% if k.jenis_komunitas %}{{ k.jenis_label }}{% else %}Jenis belum ditentukan{% endif %}</span><span>{{ k.kg_count }} kegiatan</span></div>
+          </div>
+          <div class="m-end"><b>{{ k.anggota_count }}</b><span>anggota</span></div>
+        </a>
+      </li>
+      {% empty %}
+      <li class="m-empty"><p><strong>Tidak ada komunitas yang cocok.</strong></p><p style="margin-top:6px">Coba kata kunci lain, atau hapus saringan.</p></li>
       {% endfor %}
-      {% if page_obj.has_next %}<a href="?{{ filter_params }}&page={{ page_obj.next_page_number }}" class="page-btn">&rarr;</a>{% else %}<span class="page-btn is-disabled">&rarr;</span>{% endif %}
-    </div>
-  </div>
-  {% else %}
-  <div style="padding-top:14px;border-top:1px solid var(--c-border)">
-    <span class="pagination-info">{{ page_obj.paginator.count }} komunitas</span>
-  </div>
-  {% endif %}
+    </ul>
 
-</div>
+    {% include "directory/_pagination_admin.html" with noun="komunitas" %}
+  </section>
 </div>
 
-{# ── Modal Ekspor ─────────────────────────────────────────────────────────── #}
-<div id="modal-ekspor" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);overflow-y:auto;padding:32px 16px">
-  <div style="background:var(--c-bg-card);border-radius:12px;max-width:900px;margin:0 auto;box-shadow:0 8px 32px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:calc(100vh - 64px)">
+<script>
+(function() {
+  var btn = document.getElementById('toggle-jenis'), tbl = document.getElementById('tbl-kom');
+  if (!btn || !tbl) return;
+  btn.addEventListener('click', function() {
+    var on = tbl.classList.toggle('is-per-jenis');
+    btn.setAttribute('aria-pressed', String(on));
+    btn.textContent = on ? 'Ringkas jadi satu kolom' : 'Tampilkan kolom per jenis';
+  });
+})();
+</script>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--c-border);flex-shrink:0">
-      <div>
-        <div style="font-size:16px;font-weight:700">Ekspor Data Komunitas</div>
-        <div id="ekspor-subtitle" style="font-size:12px;color:var(--c-text-muted);margin-top:2px">Memuat data…</div>
-      </div>
-      <button type="button" id="btn-modal-close" style="background:none;border:none;cursor:pointer;color:var(--c-text-muted);font-size:20px;line-height:1;padding:4px">&times;</button>
-    </div>
-
-    <div style="padding:20px 24px;overflow-y:auto;flex:1;min-height:0">
-      <p style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c-text-muted);margin-bottom:10px">Pilih kolom yang akan diekspor</p>
-      <div id="col-checks" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px 16px;margin-bottom:20px"></div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <p style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c-text-muted);margin:0">Pratinjau (8 baris pertama)</p>
-        <span id="ekspor-total" style="font-size:12px;color:var(--c-text-muted)"></span>
-      </div>
-      <div style="overflow-x:auto;border:1px solid var(--c-border);border-radius:8px">
-        <table id="preview-table" style="min-width:100%;font-size:12px;border-collapse:collapse">
-          <thead id="preview-thead" style="background:var(--c-bg-subtle)"></thead>
-          <tbody id="preview-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div style="padding:16px 24px;border-top:1px solid var(--c-border);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap">
-      <span style="font-size:12px;font-weight:600;color:var(--c-text-secondary);margin-right:4px">Unduh sebagai:</span>
-      <button type="button" id="btn-dl-csv"  class="btn btn-secondary btn-sm" disabled>CSV</button>
-      <button type="button" id="btn-dl-xlsx" class="btn btn-primary btn-sm"   disabled>XLSX</button>
-      <span id="ekspor-loading" style="font-size:12px;color:var(--c-text-muted);margin-left:8px;display:none">Memuat…</span>
-    </div>
-  </div>
-</div>
-
+{% include "directory/_export_modal.html" with export_title="Ekspor data komunitas" %}
 <script>
 (function () {
   const XLSX_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
@@ -260,7 +287,7 @@
       btnXLSX.disabled = false;
       renderPreview();
     } catch {
-      subtitle.textContent = 'Gagal memuat data.';
+      subtitle.textContent = 'Data belum bisa dimuat. Tutup, lalu coba lagi.';
     } finally {
       isLoading = false;
       loadingSpan.style.display = 'none';
@@ -304,6 +331,4 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 })();
 </script>
-
-</div>
 {% endblock %}

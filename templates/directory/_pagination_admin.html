@@ -1,0 +1,25 @@
+{# Paginasi halaman pengurus. Variabel: page_obj, page_range, filter_params, noun (mis. "anggota") #}
+{% if page_obj.has_other_pages %}
+<div class="pagination-wrap">
+  <span class="pagination-info">Menampilkan {{ page_obj.start_index }}-{{ page_obj.end_index }} dari {{ page_obj.paginator.count }} {{ noun }}</span>
+  <nav class="pagination" aria-label="Halaman">
+    {% if page_obj.has_previous %}
+      <a href="?{{ filter_params }}&page={{ page_obj.previous_page_number }}" class="page-btn" aria-label="Halaman sebelumnya"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg></a>
+    {% else %}
+      <span class="page-btn is-disabled" aria-hidden="true"><svg class="ico"><use href="#i-kiri"/></svg></span>
+    {% endif %}
+    {% for p in page_range %}
+      {% if p == '…' %}<span class="page-btn is-ellipsis pg-num">…</span>
+      {% elif p == page_obj.number %}<span class="page-btn is-active" aria-current="page">{{ p }}</span>
+      {% else %}<a href="?{{ filter_params }}&page={{ p }}" class="page-btn pg-num">{{ p }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <a href="?{{ filter_params }}&page={{ page_obj.next_page_number }}" class="page-btn" aria-label="Halaman berikutnya"><svg class="ico" aria-hidden="true"><use href="#i-kanan"/></svg></a>
+    {% else %}
+      <span class="page-btn is-disabled" aria-hidden="true"><svg class="ico"><use href="#i-kanan"/></svg></span>
+    {% endif %}
+  </nav>
+</div>
+{% else %}
+<div class="pagination-wrap"><span class="pagination-info">{{ page_obj.paginator.count }} {{ noun }}</span></div>
+{% endif %}

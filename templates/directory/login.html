@@ -1,78 +1,41 @@
 {% extends "directory/base.html" %}
-{% block title %}Masuk — Direktori Anggota WMID{% endblock %}
-
-{% block head %}
-<style>
-  .auth-shell {
-    min-height: calc(100vh - 56px);
-    display: flex; align-items: flex-start; justify-content: center;
-    padding: 60px 20px 80px;
-  }
-  .auth-box { width: 100%; max-width: 400px; }
-  .auth-head { margin-bottom: 24px; }
-  .auth-head h1 { font-size: 22px; font-weight: 700; letter-spacing: -.03em; color: var(--c-text); }
-  .auth-panel {
-    background: var(--c-bg-card); border: 1px solid var(--c-border);
-    border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: 28px 28px 24px;
-  }
-  .auth-panel .form-field { margin-bottom: 14px; }
-  .pw-wrap { position: relative; }
-  .pw-wrap input { padding-right: 40px; }
-  .pw-toggle {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; padding: 4px; cursor: pointer;
-    color: var(--c-text-muted); display: flex; align-items: center; border-radius: 4px;
-  }
-  .pw-toggle:hover { color: var(--c-text); }
-  .auth-footer { text-align: center; margin-top: 16px; font-size: 13px; color: var(--c-text-muted); }
-  .auth-footer a { color: var(--c-primary); font-weight: 500; }
-</style>
-{% endblock %}
+{% block title %}Masuk · Direktori Anggota WMID{% endblock %}
+{% block head %}{% include "directory/_auth_style.html" %}{% endblock %}
 
 {% block content %}
 <div class="auth-shell">
   <div class="auth-box">
-
     <div class="auth-head">
-      <h1>Masuk ke direktori</h1>
+      <h1>Masuk ke Direktori WMID</h1>
+      <p>Pakai email dan kata sandi akunmu.</p>
     </div>
 
     <div class="auth-panel">
       <form method="post" action="{% url 'email_login' %}">
         {% csrf_token %}
         <div class="form-field">
-          <label class="form-label" for="email">Surel</label>
+          <label class="form-label" for="email">Email</label>
           <input type="email" id="email" name="email" value="{{ email|default:'' }}"
-                 placeholder="kamu@example.com" autocomplete="email" required autofocus>
+                 placeholder="email@example.com" autocomplete="email" required autofocus>
         </div>
-        <div class="form-field" style="margin-bottom:20px">
+        <div class="form-field">
           <label class="form-label" for="password">Kata sandi</label>
           <div class="pw-wrap">
-            <input type="password" id="password" name="password"
-                   placeholder="••••••••" autocomplete="current-password" required>
-            <button type="button" class="pw-toggle" data-pw="password" aria-label="Tampilkan kata sandi">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+            <button type="button" class="pw-toggle" data-pw="password" aria-label="Tampilkan kata sandi" aria-pressed="false">
+              <svg class="ico" aria-hidden="true"><use href="#i-mata"/></svg>
             </button>
           </div>
         </div>
-        <button type="submit" class="btn btn-primary" style="width:100%">Masuk</button>
+        <button type="submit" class="btn btn-primary">Masuk</button>
       </form>
+      <div class="auth-note">
+        <svg class="ico" aria-hidden="true"><use href="#i-wiki"/></svg>
+        <p>Punya akun Wikimedia? Hubungkan setelah masuk, dari halaman profil.</p>
+      </div>
     </div>
 
-    <p class="auth-footer">Belum punya akun? <a href="{% url 'register' %}">Daftar sekarang</a></p>
-
+    <p class="auth-footer">Belum punya akun? <a href="{% url 'register' %}">Daftar</a></p>
   </div>
 </div>
-<script>
-document.querySelectorAll('[data-pw]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const inp = document.getElementById(btn.dataset.pw);
-    const show = inp.type === 'password';
-    inp.type = show ? 'text' : 'password';
-    btn.querySelector('svg').innerHTML = show
-      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
-      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-  });
-});
-</script>
 {% endblock %}

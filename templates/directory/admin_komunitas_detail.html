@@ -1,228 +1,143 @@
 {% extends "directory/base.html" %}
-{% block title %}{{ komunitas.nama_komunitas }} — Admin WMID{% endblock %}
+{% load directory_tags %}
+{% block title %}{{ komunitas.nama_komunitas }} · Pengurus WMID{% endblock %}
+{% block body_class %}density-meja{% endblock %}
 
 {% block head %}
 <style>
-  .detail-section-title {
-    font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--c-text-muted);margin-bottom:12px;padding-bottom:8px;
-    border-bottom:1px solid var(--c-border);
+  .id-card { display:grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s-5); align-items: center; }
+  .id-card .logo-box { width: 72px; height: 72px; font-size: var(--t-22); }
+  .id-name { font-size: var(--t-28); font-weight: 800; letter-spacing: -.02em; }
+  .id-line { display:flex; flex-wrap: wrap; gap: 6px 14px; align-items:center; margin-top: 8px; }
+  .jenis-sum { display:flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--s-4); }
+  .jenis-sum .chip b { font-variant-numeric: tabular-nums; }
+  .tbl-min { min-width: 620px; }
+  @media (max-width: 720px) {
+    .id-card { grid-template-columns: auto minmax(0, 1fr); gap: var(--s-4); }
+    .id-card .logo-box { width: 56px; height: 56px; font-size: var(--t-18); }
+    .id-name { font-size: var(--t-22); }
+    .id-card .page-header-actions { grid-column: 1 / -1; }
+    .id-card .page-header-actions .btn { flex: 1; }
   }
-  .detail-row {
-    display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--c-bg-subtle);
-    align-items:baseline;
-  }
-  .detail-row:last-child { border-bottom:none; }
-  .detail-key { font-size:12px;color:var(--c-text-muted);width:150px;flex-shrink:0; }
-  .detail-val { font-size:13px;color:var(--c-text);flex:1;word-break:break-word; }
-  .avail-dot { width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px; }
-  .dot-aktif { background:var(--c-success); }
-  .dot-sibuk { background:var(--c-danger); }
-  .dot-tidak_aktif { background:#D97706; }
-  .kom-av {
-    width:44px;height:44px;border-radius:10px;background:var(--c-primary);
-    color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;
-    justify-content:center;flex-shrink:0;
-  }
-  .mini-av {
-    width:28px;height:28px;border-radius:50%;background:var(--c-primary);
-    color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;
-    justify-content:center;flex-shrink:0;
-  }
-  .jenis-kg-badge {
-    display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;
-    border-radius:99px;background:var(--c-primary-light);color:var(--c-primary);
-    white-space:nowrap;
-  }
-  .kg-status {
-    display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;
-  }
-  .ks-selesai   { background:var(--c-bg-subtle);color:var(--c-text-muted); }
-  .ks-berlangsung { background:var(--c-success-light);color:var(--c-success); }
-  .ks-akan-datang { background:var(--c-warn-light);color:#92400E; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-content">
-{% include "directory/_admin_nav.html" %}
+  {% include "directory/_admin_nav.html" %}
 
-<div class="page-header">
-  <h1 class="page-title">Detail Komunitas</h1>
-  <div class="page-header-actions">
-    <a href="{% url 'admin_komunitas' %}" class="btn btn-secondary btn-sm">&larr; Kembali</a>
-    <a href="{% url 'admin_komunitas_edit' komunitas.slug %}" class="btn btn-primary btn-sm">Edit</a>
-  </div>
-</div>
+  <a href="{% url 'admin_komunitas' %}" class="breadcrumb"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg>Semua komunitas</a>
 
-<!-- Header card -->
-<div class="card" style="padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-  {% if komunitas.logo %}
-    <img src="{{ komunitas.logo }}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:contain;border:1px solid var(--c-border);background:var(--c-bg-subtle);flex-shrink:0">
-  {% else %}
-    <div class="kom-av">{{ komunitas.nama_komunitas|first|upper }}</div>
-  {% endif %}
-  <div style="flex:1;min-width:0">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span style="font-size:16px;font-weight:700;color:var(--c-text)">{{ komunitas.nama_komunitas }}</span>
-      <code style="font-size:11px;background:var(--c-bg-subtle);padding:2px 7px;border-radius:4px;color:var(--c-text-secondary)">{{ komunitas.kode }}</code>
+  <section class="card">
+    <div class="id-card">
+      <span class="logo-box" aria-hidden="true">{% if komunitas.logo %}<img src="{{ komunitas.logo }}" alt="">{% else %}{{ komunitas.nama_komunitas|initials }}{% endif %}</span>
+      <div style="min-width:0">
+        <h1 class="id-name">{{ komunitas.nama_komunitas }}</h1>
+        <div class="id-line">
+          <span class="code">{{ komunitas.kode }}</span>
+          {% if komunitas.jenis_komunitas %}<span class="chip"><svg class="ico" aria-hidden="true"><use href="#{{ komunitas.jenis_komunitas|jenis_icon }}"/></svg>{{ komunitas.jenis_label }}</span>{% endif %}
+          {% if komunitas.is_active %}<span class="st st-ok"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg>Aktif</span>{% else %}<span class="st st-idle">Tidak aktif</span>{% endif %}
+          {% if komunitas.pranala_informasi %}<a href="{{ komunitas.pranala_informasi }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:var(--t-14);font-weight:700">Halaman komunitas<svg class="ico ico-sm" aria-hidden="true"><use href="#i-luar"/></svg></a>{% endif %}
+        </div>
+      </div>
+      <div class="page-header-actions">
+        <a href="{% url 'admin_komunitas_edit' komunitas.slug %}" class="btn btn-primary"><svg class="ico" aria-hidden="true"><use href="#i-ubah"/></svg>Ubah komunitas</a>
+      </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px">
-      {% if komunitas.jenis_komunitas %}
-        <span class="jenis-badge jenis-{{ komunitas.jenis_komunitas }}">{{ komunitas.jenis_label }}</span>
-      {% endif %}
-      {% if komunitas.is_active %}
-        <span style="font-size:11px;font-weight:600;color:var(--c-success)">&#10003; Aktif</span>
-      {% else %}
-        <span style="font-size:11px;font-weight:600;color:var(--c-text-muted)">Tidak aktif</span>
-      {% endif %}
-      {% if komunitas.pranala_informasi %}
-        <a href="{{ komunitas.pranala_informasi }}" target="_blank" rel="noopener" style="font-size:12px">{{ komunitas.pranala_informasi }}</a>
-      {% endif %}
-    </div>
-  </div>
-</div>
+  </section>
 
-<!-- Info -->
-<div style="margin-bottom:20px">
-  <div class="card" style="padding:20px">
-    <p class="detail-section-title">Informasi</p>
+  <section class="card">
+    <h2 class="detail-section-title">Informasi</h2>
     <div class="detail-row">
       <span class="detail-key">Narahubung</span>
-      <span class="detail-val">
-        {% if komunitas.narahubung %}
-          {{ komunitas.narahubung.display_label }}
-        {% else %}
-          <span style="color:var(--c-text-muted)">—</span>
-        {% endif %}
-      </span>
+      <span class="detail-val">{% if komunitas.narahubung %}<a href="{% url 'admin_anggota_detail' komunitas.narahubung.pk %}" style="font-weight:700">{{ komunitas.narahubung.display_label }}</a>{% else %}Belum ditentukan{% endif %}</span>
     </div>
-    <div class="detail-row">
-      <span class="detail-key">Deskripsi</span>
-      <span class="detail-val" style="white-space:pre-line">{{ komunitas.deskripsi|default:"—" }}</span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-key">Slug</span>
-      <span class="detail-val"><code style="font-size:12px">{{ komunitas.slug }}</code></span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-key">Terakhir disinkron</span>
-      <span class="detail-val">{{ komunitas.synced_at|date:"d M Y, H:i" }}</span>
-    </div>
-  </div>
+    <div class="detail-row"><span class="detail-key">Deskripsi</span><span class="detail-val">{{ komunitas.deskripsi|default:"Belum ada deskripsi." }}</span></div>
+    <div class="detail-row"><span class="detail-key">Slug</span><span class="detail-val"><code>{{ komunitas.slug }}</code></span></div>
+    <div class="detail-row"><span class="detail-key">Terakhir disinkronkan</span><span class="detail-val">{{ komunitas.synced_at|date:"d M Y, H.i" }}</span></div>
+  </section>
 
-</div>
-
-<!-- Daftar Anggota -->
-<div class="card" style="padding:20px;margin-bottom:20px">
-  <p class="detail-section-title">Anggota <span style="font-weight:400;text-transform:none;letter-spacing:0">({{ anggota_qs.count }})</span></p>
-  {% if anggota_qs %}
-  <div class="tbl-wrap">
-    <table style="min-width:480px">
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>Status</th>
-          <th>Kegiatan terverifikasi</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for ka in anggota_qs %}
-        <tr>
-          <td>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div class="mini-av">{{ ka.member.display_label|first|upper }}</div>
-              <div>
-                <div style="font-size:13px;font-weight:600">{{ ka.member.display_label }}</div>
-                {% if ka.member.wikimedia_username %}<div class="meta">@{{ ka.member.wikimedia_username }}</div>{% endif %}
+  <section class="card">
+    <h2 class="detail-section-title">Anggota <span>{{ anggota_qs.count }}</span></h2>
+    {% if anggota_qs %}
+    <div class="tbl-wrap">
+      <table class="tbl-min tbl-hover">
+        <thead>
+          <tr>
+            <th scope="col">Anggota</th>
+            <th scope="col">Ketersediaan</th>
+            <th scope="col" class="num">Riwayat terverifikasi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ka in anggota_qs %}
+          <tr class="row-link">
+            <td>
+              <div class="who">
+                <span class="mini-av" aria-hidden="true">{{ ka.member.display_label|initials }}</span>
+                <div>
+                  <a class="row-main" href="{% url 'admin_anggota_detail' ka.member.pk %}">{{ ka.member.display_label }}</a>
+                  {% if ka.member == komunitas.narahubung %}<span class="chip chip-sm chip-soft" style="margin-left:6px">Narahubung</span>{% endif %}
+                  {% if ka.member.wikimedia_username %}<div class="code">@{{ ka.member.wikimedia_username }}</div>{% endif %}
+                </div>
               </div>
-            </div>
-          </td>
-          <td>
-            <span class="avail-dot dot-{{ ka.member.availability }}"></span>
-            <span style="font-size:12px">{{ ka.member.get_availability_display }}</span>
-          </td>
-          <td style="font-weight:600;color:var(--c-primary)">{{ ka.kg_verified }}</td>
-          <td style="text-align:right">
-            <a href="{% url 'admin_anggota_detail' ka.member.pk %}" class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:12px">Detail</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p class="meta">Belum ada anggota.</p>
-  {% endif %}
+            </td>
+            <td><span class="avail is-{{ ka.member.availability }}">{{ ka.member.availability|avail_label }}</span></td>
+            <td class="num"><span class="rj">{{ ka.kg_verified }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-inline">Belum ada anggota. Tambahkan dari halaman ubah komunitas.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2 class="detail-section-title">Kegiatan <span>{{ kegiatan_qs.count }}</span></h2>
+    {% if jenis_summary %}
+    <div class="jenis-sum">
+      {% for jenis, n in jenis_summary.items %}<span class="chip">{{ jenis }} <b>{{ n }}</b></span>{% endfor %}
+    </div>
+    {% endif %}
+    {% if kegiatan_qs %}
+    <div class="tbl-wrap">
+      <table class="tbl-min tbl-hover" style="min-width:760px">
+        <thead>
+          <tr>
+            <th scope="col">Kegiatan</th>
+            <th scope="col">Tanggal</th>
+            <th scope="col">Status</th>
+            <th scope="col">Jenis</th>
+            <th scope="col">Lokasi</th>
+            <th scope="col" class="num">Peserta</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for kg in kegiatan_qs %}
+          <tr class="row-link">
+            <td>
+              <a class="row-main" href="{% url 'kegiatan_detail' kg.kode %}">{{ kg.judul }}</a>
+              <div class="code">{{ kg.kode }}</div>
+            </td>
+            <td class="num" style="white-space:nowrap">{{ kg.tanggal_mulai|date:"d M Y" }}</td>
+            <td>
+              {% if kg.sudah_selesai %}<span class="kg-state is-selesai">Selesai</span>
+              {% elif kg.sedang_berlangsung %}<span class="kg-state is-aktif">Berlangsung</span>
+              {% else %}<span class="kg-state is-datang">Akan datang</span>{% endif %}
+            </td>
+            <td>{% if kg.jenis_kegiatan %}<span class="chip chip-sm"><span>{{ kg.jenis_kegiatan }}</span></span>{% else %}<span class="empty-cell">Belum ditentukan</span>{% endif %}</td>
+            <td>{% if kg.lokasi %}{{ kg.lokasi }}{% else %}<span class="empty-cell">Belum diisi</span>{% endif %}</td>
+            <td class="num"><span class="rj">{{ kg.peserta_count }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-inline">Belum ada kegiatan yang terkait dengan komunitas ini.</p>
+    {% endif %}
+  </section>
 </div>
-
-<!-- Daftar Kegiatan -->
-<div class="card" style="padding:20px;margin-bottom:20px">
-  <p class="detail-section-title">Kegiatan <span style="font-weight:400;text-transform:none;letter-spacing:0">({{ kegiatan_qs.count }})</span></p>
-
-  {% if jenis_summary %}
-  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
-    {% for jenis, n in jenis_summary.items %}
-    <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px;border-radius:99px;background:var(--c-bg-subtle);color:var(--c-text-secondary)">
-      {{ jenis }} <strong style="color:var(--c-primary)">{{ n }}</strong>
-    </span>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  {% if kegiatan_qs %}
-  <div class="tbl-wrap">
-    <table style="min-width:600px">
-      <thead>
-        <tr>
-          <th>Kegiatan</th>
-          <th>Jenis</th>
-          <th>Tanggal</th>
-          <th>Lokasi</th>
-          <th style="text-align:right">Peserta</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for kg in kegiatan_qs %}
-        <tr>
-          <td>
-            <a href="{% url 'kegiatan_detail' kg.kode %}" style="font-size:13px;font-weight:500">{{ kg.judul }}</a>
-            <div class="meta">{{ kg.kode }}</div>
-          </td>
-          <td>
-            {% if kg.jenis_kegiatan %}
-              <span class="jenis-kg-badge">{{ kg.jenis_kegiatan }}</span>
-            {% else %}<span class="meta">—</span>{% endif %}
-          </td>
-          <td class="meta" style="white-space:nowrap">{{ kg.tanggal_mulai|date:"d M Y" }}</td>
-          <td class="meta">{{ kg.lokasi|default:"—" }}</td>
-          <td style="text-align:right;font-weight:600;color:var(--c-primary)">{{ kg.peserta_count }}</td>
-          <td>
-            {% if kg.sudah_selesai %}
-              <span class="kg-status ks-selesai">Selesai</span>
-            {% elif kg.sedang_berlangsung %}
-              <span class="kg-status ks-berlangsung">Berlangsung</span>
-            {% else %}
-              <span class="kg-status ks-akan-datang">Akan datang</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p class="meta">Belum ada kegiatan.</p>
-  {% endif %}
-</div>
-
-</div>
-
-<style>
-  @media (max-width:640px) {
-    .detail-key { width:110px; }
-  }
-</style>
 {% endblock %}

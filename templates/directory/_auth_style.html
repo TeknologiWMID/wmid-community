@@ -1,0 +1,18 @@
+<style>
+  .auth-shell { min-height: calc(100dvh - var(--nav-h)); display:grid; place-items: start center; padding: var(--s-10) var(--s-4) var(--s-14); }
+  .auth-box { width: 100%; max-width: 420px; }
+  .auth-head { margin-bottom: var(--s-6); }
+  .auth-head h1 { font-size: var(--t-28); }
+  .auth-head p { color: var(--muted); margin-top: 6px; }
+  .auth-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: var(--s-6); }
+  .auth-panel .btn-primary { width: 100%; min-height: 48px; margin-top: var(--s-2); }
+  .auth-note { display:flex; gap: var(--s-3); align-items:flex-start; margin-top: var(--s-5); font-size: var(--t-14); color: var(--ink-2); }
+  .auth-note .ico { color: var(--primary); margin-top: 2px; }
+  .auth-footer { text-align: center; margin-top: var(--s-5); font-size: var(--t-14); color: var(--ink-2); }
+  .auth-footer a { font-weight: 700; }
+  @media (max-width: 720px) {
+    .auth-shell { padding-top: var(--s-6); }
+    .auth-head h1 { font-size: var(--t-22); }
+    .auth-panel { padding: var(--s-5) var(--s-4); }
+  }
+</style>

@@ -1,96 +1,133 @@
 {% extends "directory/base.html" %}
-{% block title %}Verifikasi data — Admin{% endblock %}
+{% load directory_tags %}
+{% block title %}Verifikasi · Pengurus WMID{% endblock %}
+{% block body_class %}density-meja{% endblock %}
+
+{% block head %}
+<style>
+  .queue { max-width: 760px; }
+  .q-group + .q-group { margin-top: var(--s-8); }
+  .q-group > p { color: var(--muted); font-size: var(--t-14); margin-top: 4px; }
+  .req-list { list-style: none; margin: var(--s-4) 0 0; padding: 0; display: grid; gap: var(--s-3); }
+  .req { display:grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-4); align-items: center; padding: var(--s-4) var(--s-5); }
+  .req-who { display:flex; gap: var(--s-3); align-items:flex-start; min-width: 0; }
+  .req-name { font-weight: 800; }
+  .req-what { margin-top: 2px; font-size: var(--t-14); color: var(--ink-2); }
+  .req-what a { font-weight: 700; }
+  .req-meta { display:flex; flex-wrap: wrap; gap: 6px 12px; align-items:center; margin-top: 8px; }
+  .quote { margin-top: 10px; padding: 8px 12px; border-radius: var(--r-control); background: var(--subtle); font-size: var(--t-14); color: var(--ink-2); overflow-wrap: anywhere; }
+  .quote b { display:block; font-size: var(--t-12); color: var(--muted); }
+  .decide { display:flex; gap: var(--s-2); }
+  .decide form { display: contents; }
+  .type-tag { font-size: var(--t-12); font-weight: 800; letter-spacing: .04em; padding: 2px 8px; border-radius: var(--r-control); }
+  .tag-in  { background: var(--success-soft); color: var(--success); }
+  .tag-out { background: var(--danger-soft); color: var(--danger); }
+  @media (max-width: 720px) {
+    .req { grid-template-columns: minmax(0, 1fr); padding: var(--s-4); }
+    .decide { display:grid; grid-template-columns: 1fr 1fr; }
+    .decide .btn { width: 100%; min-height: 48px; }
+    .q-group + .q-group { margin-top: var(--s-6); }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="page-content">
-{% include "directory/_admin_nav.html" %}
+  {% include "directory/_admin_nav.html" %}
 
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Verifikasi Data</h1>
-    <p style="font-size:13px;color:var(--c-text-muted);margin-top:2px">Pendaftaran yang menunggu konfirmasi</p>
-  </div>
-</div>
-
-  {# Komunitas pending #}
-  {% if pending_kom %}
-  <div class="card" style="margin-bottom:20px;border-color:#f59e0b">
-    <p class="section-label" style="margin-bottom:14px;color:#b45309">
-      Permintaan keanggotaan komunitas <span style="font-weight:400;color:var(--c-text-muted)">({{ pending_kom|length }})</span>
-    </p>
-    <div style="display:flex;flex-direction:column;gap:0">
-      {% for entry in pending_kom %}
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--c-border);flex-wrap:wrap">
-        <div style="flex:1;min-width:200px">
-          <div style="font-size:13px;font-weight:600">{{ entry.member.display_label }}</div>
-          <div style="font-size:12px;color:var(--c-text-muted)">
-            {% if entry.tipe == 'gabung' %}Ingin bergabung{% else %}Ingin keluar{% endif %}
-            — <strong>{{ entry.komunitas.nama_komunitas }}</strong>
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--c-text-muted)">{{ entry.created_at|date:"d M Y" }}</div>
-        <div style="display:flex;gap:6px">
-          <form method="post" action="{% url 'admin_komunitas_verify' entry.pk %}" style="margin:0">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="terima">
-            <button type="submit" class="btn btn-primary btn-sm">Terima</button>
-          </form>
-          <form method="post" action="{% url 'admin_komunitas_verify' entry.pk %}" style="margin:0">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="tolak">
-            <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--c-danger)">Tolak</button>
-          </form>
-        </div>
+  <div class="queue">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Menunggu verifikasi</h1>
+        <p class="page-sub">Periksa tiap permintaan, lalu terima atau tolak. Riwayat yang diterima langsung tampil di profil anggota.</p>
       </div>
-      {% endfor %}
     </div>
-  </div>
-  {% endif %}
 
-  {# Kegiatan pending #}
-  {% if pending %}
-  <div class="card" style="margin-bottom:20px;border-color:#f59e0b">
-    <p class="section-label" style="margin-bottom:14px;color:#b45309">
-      Pendaftaran kegiatan <span style="font-weight:400;color:var(--c-text-muted)">({{ pending|length }})</span>
-    </p>
-    <div style="display:flex;flex-direction:column;gap:0">
-      {% for entry in pending %}
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--c-border);flex-wrap:wrap">
-        <div style="flex:1;min-width:200px">
-          <div style="font-size:13px;font-weight:600">{{ entry.member.display_label }}</div>
-          <div style="font-size:12px;color:var(--c-text-muted)">
-            {{ entry.get_role_display }} — <a href="{% url 'admin_kegiatan_detail' entry.kegiatan.kode %}" style="color:var(--c-primary)">{{ entry.kegiatan.judul }}</a>
-            <span style="color:var(--c-border)">·</span> {{ entry.kegiatan.kode }}
+    {% if pending_kom %}
+    <section class="q-group" aria-labelledby="g-kom">
+      <h2 id="g-kom">Keanggotaan komunitas <span class="count">{{ pending_kom|length }}</span></h2>
+      <ul class="req-list">
+        {% for entry in pending_kom %}
+        <li class="card req">
+          <div class="req-who">
+            <span class="mini-av" aria-hidden="true">{{ entry.member.display_label|initials }}</span>
+            <div style="min-width:0">
+              <div class="req-name">{{ entry.member.display_label }}</div>
+              <div class="req-what">
+                {% if entry.tipe == 'gabung' %}Ingin <strong>bergabung</strong> dengan{% else %}Ingin <strong>keluar</strong> dari{% endif %}
+                {{ entry.komunitas.nama_komunitas }}
+              </div>
+              <div class="req-meta">
+                {% if entry.tipe == 'gabung' %}<span class="type-tag tag-in">GABUNG</span>{% else %}<span class="type-tag tag-out">KELUAR</span>{% endif %}
+                <span class="meta">Dikirim {{ entry.created_at|date:"d M Y" }}</span>
+              </div>
+            </div>
           </div>
-          {% if entry.catatan %}
-          <div style="font-size:12px;color:var(--c-text-secondary);margin-top:2px">"{{ entry.catatan }}"</div>
-          {% endif %}
-        </div>
-        <div style="font-size:11px;color:var(--c-text-muted)">{{ entry.created_at|date:"d M Y" }}</div>
-        <div style="display:flex;gap:6px">
-          <form method="post" action="{% url 'admin_kegiatan_verify' entry.pk %}" style="margin:0">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="terima">
-            <button type="submit" class="btn btn-primary btn-sm">Terima</button>
-          </form>
-          <form method="post" action="{% url 'admin_kegiatan_verify' entry.pk %}" style="margin:0">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="tolak">
-            <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--c-danger)">Tolak</button>
-          </form>
-        </div>
-      </div>
-      {% endfor %}
+          <div class="decide">
+            <form method="post" action="{% url 'admin_komunitas_verify' entry.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="tolak">
+              <button type="submit" class="btn btn-secondary">Tolak</button>
+            </form>
+            <form method="post" action="{% url 'admin_komunitas_verify' entry.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="terima">
+              <button type="submit" class="btn btn-primary"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg>Terima</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if pending %}
+    <section class="q-group" aria-labelledby="g-kg">
+      <h2 id="g-kg">Riwayat kegiatan <span class="count">{{ pending|length }}</span></h2>
+      <p>Catatan yang ditolak akan dihapus dari riwayat anggota tersebut.</p>
+      <ul class="req-list">
+        {% for entry in pending %}
+        <li class="card req">
+          <div class="req-who">
+            <span class="mini-av" aria-hidden="true">{{ entry.member.display_label|initials }}</span>
+            <div style="min-width:0">
+              <div class="req-name">{{ entry.member.display_label }}</div>
+              <div class="req-what">Mencatat diri sebagai {{ entry.get_role_display|lower }} di <a href="{% url 'admin_kegiatan_detail' entry.kegiatan.kode %}">{{ entry.kegiatan.judul }}</a></div>
+              <div class="req-meta">
+                <span class="chip"><svg class="ico" aria-hidden="true"><use href="#{{ entry.role|role_icon }}"/></svg>{{ entry.get_role_display }}</span>
+                <span class="code">{{ entry.kegiatan.kode }}</span>
+                <span class="meta">Dikirim {{ entry.created_at|date:"d M Y" }}</span>
+              </div>
+              {% if entry.catatan %}
+              <div class="quote"><b>Keterangan dari anggota</b>{{ entry.catatan }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="decide">
+            <form method="post" action="{% url 'admin_kegiatan_verify' entry.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="tolak">
+              <button type="submit" class="btn btn-secondary">Tolak</button>
+            </form>
+            <form method="post" action="{% url 'admin_kegiatan_verify' entry.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="terima">
+              <button type="submit" class="btn btn-primary"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg>Terima</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if not pending and not pending_kom %}
+    <div class="card empty-state">
+      <span class="cap cap-lg" aria-hidden="true"><svg class="ico"><use href="#i-cek"/></svg></span>
+      <h2>Antrean sudah bersih</h2>
+      <p>Tidak ada catatan kegiatan atau permintaan komunitas yang menunggu. Permintaan baru dari anggota akan muncul di sini.</p>
     </div>
+    {% endif %}
   </div>
-  {% endif %}
-
-  {% if not pending and not pending_kom %}
-  <div class="card" style="margin-bottom:20px">
-    <p class="meta">Tidak ada data yang menunggu verifikasi.</p>
-  </div>
-  {% endif %}
-
-
 </div>
 {% endblock %}

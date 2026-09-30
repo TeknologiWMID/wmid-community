@@ -1,350 +1,114 @@
 {% extends "directory/base.html" %}
-{% block title %}Direktori Anggota — Wikimedia Indonesia{% endblock %}
+{% block title %}Direktori Anggota WMID{% endblock %}
 
 {% block head %}
 <style>
-  /*
-    Design Read: WMID Member Directory landing page.
-    Audience: anggota komunitas Wikimedia Indonesia.
-    Tone: institutional, profesional, bersih.
-    Dial: ENERGY 2 / RHYTHM 2 / MOTION 1.
+  .home-hero { max-width: var(--max-app); margin: 0 auto; padding: var(--s-14) var(--s-4) var(--s-10); display:grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--s-10); align-items: center; }
+  .home-kicker { font-size: var(--t-14); font-weight: 700; color: var(--primary); margin-bottom: var(--s-3); }
+  .home-hero h1 { font-size: clamp(2rem, 4.2vw, 3.1rem); line-height: 1.08; letter-spacing: -.03em; max-width: 16ch; }
+  .home-hero h1 mark { background: linear-gradient(transparent 62%, var(--accent) 62%); color: inherit; padding: 0 2px; }
+  .home-sub { font-size: var(--t-18); color: var(--ink-2); margin-top: var(--s-4); max-width: 52ch; }
+  .home-actions { display:flex; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-6); }
+  .home-actions .btn { min-height: 48px; padding-inline: 22px; font-size: var(--t-16); }
 
-    Decision log:
-    - Hero split (55/45): komposisi dua kolom memberikan visual weight; tidak hanya teks di
-      atas background biru yang terasa hampa.
-    - Heading 80px: display size yang sesungguhnya — cukup besar untuk jadi focal point.
-    - Visual kanan: mosaic avatar circles (aria-hidden) — representasi konsep direktori
-      anggota tanpa menggunakan data nyata atau palsu. Warna dari brand token yang ada.
-    - Amber accent bar: satu penggunaan aksen deliberat, di atas heading.
-    - Feature grid 3-kolom: 1px border divider, tidak ada shadow individual yang bertumpuk.
-    - CTA card: horizontal layout, background muted untuk variasi dari section putih di atas.
-    - Tidak ada member count, tidak ada preview data anggota.
-  */
+  .sample { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: var(--s-5); box-shadow: var(--shadow-float); }
+  .sample-label { font-size: var(--t-12); font-weight: 700; color: var(--muted); letter-spacing: .04em; margin-bottom: var(--s-4); }
+  .sample-who { display:flex; gap: var(--s-3); align-items:center; padding-bottom: var(--s-4); border-bottom: 1px solid var(--line); }
+  .sample-row { display:grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: var(--s-3); align-items: center; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+  .sample-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .sample-date { font-size: var(--t-13); font-weight: 700; color: var(--muted); }
+  .sample-title { font-weight: 700; font-size: var(--t-14); }
 
-  /* ── Hero ─────────────────────────────────────────────────────────────────── */
-  .hero {
-    background: var(--c-primary);
-    overflow: hidden;
-  }
-  .hero-wrap {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 80px 20px 88px;
-    display: grid;
-    grid-template-columns: 55fr 45fr;
-    gap: 48px;
-    align-items: center;
-    min-height: 480px;
-  }
+  .home-flow { max-width: var(--max-app); margin: 0 auto; padding: 0 var(--s-4) var(--s-14); }
+  .home-flow h2 { font-size: var(--t-22); margin-bottom: var(--s-5); }
+  .flow { list-style: none; margin: 0; padding: 0; display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); counter-reset: step; }
+  .flow li { counter-increment: step; padding-top: var(--s-4); border-top: 2px solid var(--ink); }
+  .flow li::before { content: counter(step); display:block; font-size: var(--t-13); font-weight: 800; color: var(--primary); margin-bottom: var(--s-2); }
+  .flow h3 { font-size: var(--t-18); margin-bottom: 6px; }
+  .flow p { color: var(--ink-2); }
+  .home-wiki { margin-top: var(--s-8); display:flex; gap: var(--s-3); align-items:flex-start; padding: var(--s-5); border-radius: var(--r-card); background: var(--primary-soft); }
+  .home-wiki .ico { width: 24px; height: 24px; color: var(--primary); flex-shrink: 0; }
 
-  /* Kolom teks */
-  .hero-accent {
-    width: 36px;
-    height: 3px;
-    background: var(--c-accent);
-    border-radius: 2px;
-    margin-bottom: 24px;
-  }
-  .hero-eyebrow {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.45);
-    margin-bottom: 16px;
-  }
-  .hero h1 {
-    font-size: clamp(44px, 6vw, 76px);
-    font-weight: 800;
-    line-height: 1.06;
-    letter-spacing: -.045em;
-    color: #fff;
-    margin-bottom: 20px;
-  }
-  .hero-sub {
-    font-size: 16px;
-    color: rgba(255,255,255,.62);
-    line-height: 1.75;
-    max-width: 360px;
-    margin-bottom: 36px;
-  }
-  .hero-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .btn-hero {
-    display: inline-flex;
-    align-items: center;
-    padding: 13px 24px;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: var(--radius-sm);
-    text-decoration: none;
-    font-family: var(--font);
-    letter-spacing: -.01em;
-    line-height: 1;
-    transition: background .12s, border-color .12s, color .12s;
-  }
-  .btn-hero:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-  .btn-hero-p { background: #fff; color: var(--c-primary); }
-  .btn-hero-p:hover { background: var(--c-primary-light); color: var(--c-primary-dark); }
-  .btn-hero-s {
-    background: transparent;
-    color: rgba(255,255,255,.78);
-    border: 1px solid rgba(255,255,255,.25);
-  }
-  .btn-hero-s:hover { border-color: rgba(255,255,255,.55); color: #fff; }
+  .home-cta { max-width: var(--max-app); margin: 0 auto var(--s-14); padding: 0 var(--s-4); }
+  .home-cta-card { display:flex; align-items:center; justify-content:space-between; gap: var(--s-5); flex-wrap: wrap; padding: var(--s-6); border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); }
+  .home-cta-card p { color: var(--ink-2); margin-top: 4px; max-width: 60ch; }
 
-  /* Kolom visual: mosaic avatar circles */
-  .hero-visual {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
+  @media (max-width: 900px) {
+    .home-hero { grid-template-columns: minmax(0, 1fr); gap: var(--s-8); padding-top: var(--s-8); }
+    .flow { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
   }
-  .mosaic {
-    display: grid;
-    grid-template-columns: repeat(4, 56px);
-    grid-template-rows: repeat(4, 56px);
-    gap: 12px;
-  }
-  .mc {
-    border-radius: 50%;
-    display: block;
-  }
-  /* Warna diambil dari brand token dan variasinya */
-  .mc-a { background: rgba(255,255,255,.20); }
-  .mc-b { background: rgba(255,255,255,.10); }
-  .mc-c { background: rgba(192,92,0,.55); }       /* amber */
-  .mc-d { background: rgba(26,107,60,.50); }       /* hijau */
-  .mc-e { background: rgba(255,255,255,.30); }
-  .mc-f { background: rgba(192,92,0,.30); }
-  .mc-g { background: rgba(255,255,255,.08); }
-  .mc-h { background: rgba(26,107,60,.28); }
-  .mc-i { background: rgba(255,255,255,.15); }
-  .mc-j { background: rgba(192,92,0,.45); }
-  .mc-k { background: rgba(255,255,255,.22); }
-  .mc-l { background: rgba(26,107,60,.4); }
-  .mc-m { background: rgba(255,255,255,.12); }
-  .mc-n { background: rgba(255,255,255,.06); }
-  .mc-o { background: rgba(192,92,0,.2); }
-  .mc-p { background: rgba(255,255,255,.18); }
-
-  /* ── Feature grid ─────────────────────────────────────────────────────────── */
-  .feat-sec {
-    background: var(--c-bg-card);
-    padding: 80px 20px;
-  }
-  .feat-sec-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-  }
-  .feat-heading {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -.025em;
-    color: var(--c-text);
-    margin-bottom: 6px;
-  }
-  .feat-desc {
-    font-size: 14px;
-    color: var(--c-text-muted);
-    line-height: 1.65;
-    margin-bottom: 40px;
-    max-width: 420px;
-  }
-  .feat-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--c-border);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-  .feat-cell {
-    background: var(--c-bg-card);
-    padding: 28px 26px 32px;
-  }
-  .feat-cell-icon {
-    width: 38px; height: 38px;
-    border-radius: var(--radius-sm);
-    background: var(--c-primary-light);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--c-primary);
-    margin-bottom: 18px;
-  }
-  .feat-cell h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--c-text);
-    margin-bottom: 8px;
-    letter-spacing: -.01em;
-  }
-  .feat-cell p {
-    font-size: 13px;
-    color: var(--c-text-secondary);
-    line-height: 1.65;
-  }
-
-  /* ── CTA ──────────────────────────────────────────────────────────────────── */
-  .cta-sec {
-    background: var(--c-bg);
-    padding: 72px 20px;
-  }
-  .cta-card {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    background: var(--c-bg-card);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-lg);
-    padding: 40px 48px;
-    box-shadow: var(--shadow-card);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 32px;
-  }
-  .cta-card-text h2 {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -.025em;
-    color: var(--c-text);
-    margin-bottom: 6px;
-  }
-  .cta-card-text p {
-    font-size: 14px;
-    color: var(--c-text-muted);
-    line-height: 1.65;
-    max-width: 400px;
-  }
-
-  /* ── Responsive ───────────────────────────────────────────────────────────── */
-  @media (max-width: 760px) {
-    .hero-wrap {
-      grid-template-columns: 1fr;
-      min-height: auto;
-      padding: 60px 20px 56px;
-    }
-    .hero-visual { display: none; }
-    .feat-grid { grid-template-columns: 1fr; }
-    .cta-card {
-      flex-direction: column;
-      align-items: flex-start;
-      padding: 28px 24px;
-      gap: 20px;
-    }
-  }
-  @media (max-width: 640px) {
-    .feat-sec { padding: 56px 20px; }
-    .cta-sec { padding: 48px 20px; }
+  @media (max-width: 720px) {
+    .home-hero { padding: var(--s-6) var(--s-4) var(--s-8); }
+    .home-sub { font-size: var(--t-16); }
+    .home-actions .btn { flex: 1; }
+    .home-flow, .home-cta { padding-bottom: var(--s-8); margin-bottom: 0; }
+    .home-cta-card .btn { width: 100%; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-
-{# ── Hero ─────────────────────────────────────────────────────────────────── #}
-<section class="hero">
-  <div class="hero-wrap">
-
-    <div class="hero-text">
-      <div class="hero-accent"></div>
-      <p class="hero-eyebrow">Wikimedia Indonesia</p>
-      <h1>Lorem ipsum dolor sit amet</h1>
-      <p class="hero-sub">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-        incididunt ut labore et dolore magna aliqua ut enim.
-      </p>
-      <div class="hero-actions">
-        {% if member %}
-          <a href="{% url 'profile' %}" class="btn-hero btn-hero-p">Profil saya</a>
-        {% else %}
-          <a href="{% url 'email_login' %}" class="btn-hero btn-hero-p">Masuk</a>
-        {% endif %}
-      </div>
+<section class="home-hero">
+  <div>
+    <p class="home-kicker">Wikimedia Indonesia</p>
+    <h1>Temukan orang yang tepat dari <mark>rekam jejaknya</mark></h1>
+    <p class="home-sub">Direktori ini mencatat kegiatan dan kontribusi wiki anggota Wikimedia Indonesia. Pengurus bisa mencari pelatih, juri, panitia, atau narasumber dari riwayat yang sudah diverifikasi.</p>
+    <div class="home-actions">
+      {% if member %}
+        <a href="{% url 'profile' %}" class="btn btn-primary">Buka profil saya</a>
+      {% else %}
+        <a href="{% url 'email_login' %}" class="btn btn-primary">Masuk</a>
+        <a href="{% url 'register' %}" class="btn btn-secondary">Daftar</a>
+      {% endif %}
     </div>
+  </div>
 
-    {# Mosaic representasi komunitas — hanya dekorasi, aria-hidden #}
-    <div class="hero-visual" aria-hidden="true">
-      <div class="mosaic">
-        <span class="mc mc-a"></span>
-        <span class="mc mc-e"></span>
-        <span class="mc mc-b"></span>
-        <span class="mc mc-c"></span>
-        <span class="mc mc-d"></span>
-        <span class="mc mc-a"></span>
-        <span class="mc mc-f"></span>
-        <span class="mc mc-g"></span>
-        <span class="mc mc-h"></span>
-        <span class="mc mc-i"></span>
-        <span class="mc mc-e"></span>
-        <span class="mc mc-j"></span>
-        <span class="mc mc-k"></span>
-        <span class="mc mc-b"></span>
-        <span class="mc mc-l"></span>
-        <span class="mc mc-m"></span>
-      </div>
+  <figure class="sample" aria-label="Contoh tampilan riwayat kegiatan di profil anggota">
+    <p class="sample-label">CONTOH TAMPILAN RIWAYAT</p>
+    <div class="sample-who">
+      <span class="av" aria-hidden="true">NA</span>
+      <div><div style="font-weight:800">Nama Anggota</div><span class="avail is-aktif">Bisa diajak</span></div>
     </div>
+    <div class="sample-row">
+      <span class="sample-date">Bulan ini</span>
+      <div><div class="sample-title">WikiLatih di komunitasmu</div><span class="chip chip-sm" style="margin-top:4px"><svg class="ico" aria-hidden="true"><use href="#r-pelatih"/></svg>Pelatih</span></div>
+      <span class="st st-wait" title="Menunggu verifikasi"><svg class="ico" aria-hidden="true"><use href="#i-jam"/></svg></span>
+    </div>
+    <div class="sample-row">
+      <span class="sample-date">Bulan lalu</span>
+      <div><div class="sample-title">Lomba menulis artikel</div><span class="chip chip-sm" style="margin-top:4px"><svg class="ico" aria-hidden="true"><use href="#r-juri"/></svg>Juri</span></div>
+      <span class="cap" title="Terverifikasi"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg></span>
+    </div>
+    <div class="sample-row">
+      <span class="sample-date">Tahun lalu</span>
+      <div><div class="sample-title">Kopdar komunitas</div><span class="chip chip-sm" style="margin-top:4px"><svg class="ico" aria-hidden="true"><use href="#r-panitia"/></svg>Panitia</span></div>
+      <span class="cap" title="Terverifikasi"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg></span>
+    </div>
+  </figure>
+</section>
 
+<section class="home-flow" aria-labelledby="h-flow">
+  <h2 id="h-flow">Cara kerjanya</h2>
+  <ol class="flow">
+    <li><h3>Catat kegiatan</h3><p>Tulis kegiatan WMID yang pernah kamu ikuti dan peranmu di sana.</p></li>
+    <li><h3>Diverifikasi pengurus</h3><p>Pengurus memeriksa catatanmu, lalu memberi cap terverifikasi.</p></li>
+    <li><h3>Tampil di profil</h3><p>Riwayat terverifikasi bisa dilihat pengurus saat mencari orang untuk kegiatan berikutnya.</p></li>
+  </ol>
+  <div class="home-wiki">
+    <svg class="ico" aria-hidden="true"><use href="#i-wiki"/></svg>
+    <p><strong>Hubungkan akun Wikimedia</strong> supaya suntinganmu di Wikipedia, Wikidata, dan Commons ikut tercatat di profil.</p>
   </div>
 </section>
 
-{# ── Features ──────────────────────────────────────────────────────────────── #}
-<section class="feat-sec">
-  <div class="feat-sec-inner">
-    <p class="section-label">Fitur</p>
-    <h2 class="feat-heading">Lorem ipsum dolor sit amet consectetur</h2>
-    <p class="feat-desc">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.</p>
-
-    <div class="feat-grid">
-
-      <div class="feat-cell">
-        <div class="feat-cell-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-          </svg>
-        </div>
-        <h3>Lorem ipsum dolor</h3>
-        <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat duis.</p>
-      </div>
-
-      <div class="feat-cell">
-        <div class="feat-cell-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-        </div>
-        <h3>Consectetur adipiscing</h3>
-        <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur.</p>
-      </div>
-
-      <div class="feat-cell">
-        <div class="feat-cell-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-        </div>
-        <h3>Sed do eiusmod tempor</h3>
-        <p>Sunt in culpa qui officia deserunt mollit anim id est laborum sed perspiciatis unde omnis iste natus error.</p>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-{# ── CTA: hanya untuk tamu yang belum login ────────────────────────────────── #}
 {% if not member %}
-<section class="cta-sec">
-  <div class="cta-card">
-    <div class="cta-card-text">
-      <h2>Lorem ipsum dolor sit amet</h2>
-      <p>Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+<section class="home-cta">
+  <div class="home-cta-card">
+    <div>
+      <h2>Sudah pernah ikut kegiatan WMID?</h2>
+      <p>Daftar dengan email yang sama dengan saat kamu ikut kegiatan, riwayatmu akan langsung tersambung.</p>
     </div>
-    <a href="{% url 'email_login' %}" class="btn btn-primary" style="white-space:nowrap;flex-shrink:0;">Masuk sekarang</a>
+    <a href="{% url 'register' %}" class="btn btn-primary">Daftar sekarang</a>
   </div>
 </section>
 {% endif %}
-
 {% endblock %}

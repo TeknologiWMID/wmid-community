@@ -1,3 +1,4 @@
+import logging
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
@@ -6,10 +7,12 @@ from directory.models import Kegiatan, KegiatanAnggota, KegiatanLink, Komunitas,
 from .utils import get_session_member
 
 
+logger = logging.getLogger(__name__)
+
 def kegiatan_list(request):
     member = get_session_member(request)
     if not member:
-        messages.info(request, 'Silakan login terlebih dahulu.')
+        messages.info(request, 'Masuk dulu untuk membuka halaman itu.')
         return redirect('index')
 
     qs = Kegiatan.objects.filter(
@@ -31,7 +34,7 @@ def kegiatan_list(request):
 def kegiatan_detail(request, kode):
     member = get_session_member(request)
     if not member:
-        messages.info(request, 'Silakan login terlebih dahulu.')
+        messages.info(request, 'Masuk dulu untuk membuka halaman itu.')
         return redirect('index')
 
     kegiatan = get_object_or_404(Kegiatan, kode=kode)
@@ -65,11 +68,11 @@ def kegiatan_daftar(request, kode):
         defaults={'role': role, 'catatan': catatan, 'status': status, 'added_by': member},
     )
     if not created:
-        messages.info(request, 'Kamu sudah terdaftar di kegiatan ini.')
+        messages.info(request, 'Kegiatan ini sudah ada di riwayatmu.')
     elif status == KegiatanAnggota.STATUS_MENUNGGU:
-        messages.success(request, 'Pendaftaran terkirim, menunggu verifikasi admin.')
+        messages.success(request, 'Terkirim. Pengurus akan memverifikasi pendaftaranmu.')
     else:
-        messages.success(request, f'Berhasil terdaftar sebagai {obj.get_role_display()}.')
+        messages.success(request, f'Kamu tercatat sebagai {obj.get_role_display().lower()} di kegiatan ini.')
 
     return redirect('kegiatan_detail', kode=kode)
 
@@ -89,11 +92,13 @@ def sync_kegiatan(request):
         resp.raise_for_status()
         payload = resp.json()
     except Exception as e:
-        messages.error(request, f'Gagal fetch API: {e}')
+        logger.warning('Sinkronisasi kegiatan gagal: %s', e)
+        messages.error(request, 'Data dari situs WMID tidak bisa diambil saat ini. Coba lagi nanti.')
         return redirect('kegiatan_list')
 
     if not payload.get('success'):
-        messages.error(request, 'API mengembalikan error.')
+        logger.warning('API kegiatan mengembalikan success=false')
+        messages.error(request, 'Data dari situs WMID tidak bisa diambil saat ini. Coba lagi nanti.')
         return redirect('kegiatan_list')
 
     raw = payload.get('data', [])
@@ -159,5 +164,5 @@ def sync_kegiatan(request):
 
         created += 1
 
-    messages.success(request, f'Sinkronisasi selesai: {created} baru, {updated} diperbarui, {skipped} dilewati.')
+    messages.success(request, f'Sinkronisasi selesai: {created} kegiatan baru, {updated} diperbarui, {skipped} dilewati.')
     return redirect('kegiatan_list')

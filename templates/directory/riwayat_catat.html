@@ -1,228 +1,164 @@
 {% extends "directory/base.html" %}
-{% block title %}Catat Kegiatan — Profil{% endblock %}
+{% block title %}Catat kegiatan · Direktori Anggota WMID{% endblock %}
 
 {% block head %}
 <style>
-  .catat-card { max-width: 860px; }
-
+  .page-catat { max-width: 720px; }
   .kegiatan-search-wrap { position: relative; }
+  .kegiatan-search-wrap.is-hidden { display: none; }
   .kegiatan-list-box {
-    display: none;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
-    background: var(--c-bg-card);
-    max-height: 220px;
-    overflow-y: auto;
-    margin-top: 4px;
-    box-shadow: var(--shadow-elevated);
+    display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card);
+    box-shadow: var(--shadow-float); max-height: 320px; overflow-y: auto; padding: 4px;
   }
   .kegiatan-list-box.is-open { display: block; }
-  .kegiatan-option {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--c-bg-subtle);
-    cursor: pointer;
-    transition: background .1s;
-  }
-  .kegiatan-option:last-child { border-bottom: none; }
-  .kegiatan-option:hover,
-  .kegiatan-option.is-focused { background: var(--c-bg-subtle); }
-  .kegiatan-option-title { font-size: 13px; font-weight: 600; line-height: 1.4; }
-  .kegiatan-option-meta  { font-size: 11px; color: var(--c-text-muted); margin-top: 2px; }
+  .kegiatan-option { padding: 10px; border-radius: var(--r-control); cursor: pointer; min-height: var(--tap); }
+  .kegiatan-option:hover, .kegiatan-option.is-focused { background: var(--subtle); }
+  .kegiatan-option-title { font-size: var(--t-14); font-weight: 700; line-height: 1.4; }
+  .kegiatan-option-meta { font-size: var(--t-13); color: var(--muted); margin-top: 2px; }
 
-  .selected-kegiatan {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: var(--c-bg-subtle);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
-    margin-top: 6px;
-  }
+  .selected-kegiatan { display: none; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--r-control); background: var(--primary-soft); border: 1px solid var(--primary); }
   .selected-kegiatan.is-visible { display: flex; }
+  .selected-kegiatan .ico { color: var(--primary); }
   .selected-kegiatan-info { flex: 1; min-width: 0; }
-  .selected-kegiatan-title { font-size: 13px; font-weight: 600; }
-  .selected-kegiatan-meta  { font-size: 11px; color: var(--c-text-muted); margin-top: 2px; }
-  .clear-selection-btn {
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    color: var(--c-text-muted);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 2px 4px;
-    line-height: 1;
-    border-radius: var(--radius-sm);
-  }
-  .clear-selection-btn:hover { color: var(--c-text); background: var(--c-bg); }
+  .selected-kegiatan-title { font-weight: 800; }
+  .selected-kegiatan-meta { font-size: var(--t-13); color: var(--ink-2); margin-top: 2px; }
+  .clear-selection-btn { flex-shrink: 0; min-height: 36px; padding: 0 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); border-radius: var(--r-control); font-weight: 700; font-size: var(--t-13); cursor: pointer; }
+  .clear-selection-btn:hover { background: var(--subtle); }
 
-  .manual-fields { }
   .manual-fields.is-hidden { display: none; }
+  .fields-3 { display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--s-4); }
+  .fields-2 { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-4); }
+  .group-title { font-size: var(--t-16); font-weight: 800; margin-bottom: var(--s-4); }
 
-  .section-divider {
-    height: 1px;
-    background: var(--c-border);
-    margin: 20px 0;
-  }
-
-
-  .komunitas-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-  .komunitas-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    padding: 3px 8px 3px 10px;
-    border-radius: 99px;
-    background: var(--c-primary-light);
-    color: var(--c-primary);
-    font-weight: 500;
-  }
-  .komunitas-chip button {
-    background: none;
-    border: none;
-    color: var(--c-primary);
-    cursor: pointer;
-    font-size: 13px;
-    padding: 0;
-    line-height: 1;
-    opacity: .7;
-  }
-  .komunitas-chip button:hover { opacity: 1; }
+  .komunitas-chips { display:flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--s-2); }
+  .komunitas-chips:empty { display: none; }
+  .komunitas-chip { display:inline-flex; align-items:center; gap: 2px; min-height: 32px; padding: 0 2px 0 10px; border-radius: var(--r-control); background: var(--primary-soft); color: var(--primary); font-size: var(--t-13); font-weight: 700; }
+  .komunitas-chip button { width: 28px; height: 28px; border: 0; background: none; color: inherit; cursor: pointer; border-radius: var(--r-control); }
+  .komunitas-chip button:hover { background: var(--surface); }
   .komunitas-search-wrap { position: relative; }
-  .komunitas-dd {
-    display: none;
-    position: absolute;
-    top: calc(100% + 4px); left: 0; right: 0;
-    background: var(--c-bg-card);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-elevated);
-    z-index: 100;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-  .komunitas-dd-item {
-    padding: 8px 12px;
-    font-size: 13px;
-    cursor: pointer;
-    border-bottom: 1px solid var(--c-bg-subtle);
-  }
-  .komunitas-dd-item:hover { background: var(--c-bg-subtle); }
-  .komunitas-dd-item:last-child { border-bottom: none; }
+  .komunitas-dd { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-float); max-height: 260px; overflow-y: auto; padding: 4px; }
+  .komunitas-dd-item { display:flex; align-items:center; gap: 8px; min-height: var(--tap); padding: 8px 10px; font-size: var(--t-14); cursor: pointer; border-radius: var(--r-control); }
+  .komunitas-dd-item:hover { background: var(--subtle); }
 
+  .save-bar { display:flex; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-6); }
+  @media (max-width: 720px) {
+    .fields-3, .fields-2 { grid-template-columns: minmax(0, 1fr); }
+    .save-bar {
+      position: sticky; bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px)); z-index: 20;
+      margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-4)); padding: var(--s-3) var(--s-4);
+      background: var(--surface); border-top: 1px solid var(--line); border-radius: 0 0 var(--r-card) var(--r-card);
+    }
+    .save-bar .btn { flex: 1; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-content">
-
-<a href="{% url 'profile' %}" class="breadcrumb">&larr; Profil</a>
-
-<h1 style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px">Catat kegiatan</h1>
-<p class="meta" style="margin-bottom:24px">Tambahkan riwayat kegiatan yang sudah kamu ikuti.</p>
-
-<div class="card catat-card">
-  <form method="post" action="{% url 'riwayat_catat' %}" id="form-catat">
-    {% csrf_token %}
-    <input type="hidden" name="kegiatan_id" id="field-kegiatan-id" value="">
-
-    {# ── Nama kegiatan ─────────────────────────────────────────────────────── #}
-    <div class="form-field" id="field-judul-wrap">
-      <label class="form-label" for="kegiatan-search-input">
-        Nama kegiatan <span style="color:var(--c-accent)">*</span>
-      </label>
-      <div class="kegiatan-search-wrap">
-        <input type="text" id="kegiatan-search-input" name="judul" required
-               autocomplete="off"
-               placeholder="Ketik nama kegiatan WMID atau kegiatan lainnya…">
-        <div class="kegiatan-list-box" id="kegiatan-list-box" role="listbox">
-          {# filled by JS #}
-        </div>
-      </div>
-      <div class="selected-kegiatan" id="selected-kegiatan-card">
-        <div class="selected-kegiatan-info">
-          <div class="selected-kegiatan-title" id="selected-kegiatan-title"></div>
-          <div class="selected-kegiatan-meta"  id="selected-kegiatan-meta"></div>
-        </div>
-        <button type="button" class="clear-selection-btn" id="clear-selection-btn" title="Batalkan pilihan">&#10005;</button>
-      </div>
-      <p class="form-hint">Kegiatan WMID resmi akan muncul saat mengetik. Pilih dari daftar, atau lanjutkan mengetik untuk mencatat kegiatan lainnya.</p>
+<div class="page-content page-catat">
+  <a href="{% url 'profile' %}" class="breadcrumb"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg>Kembali ke profil</a>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Catat kegiatan</h1>
+      <p class="page-sub">Catat kegiatan yang pernah kamu ikuti. Pengurus akan memeriksanya sebelum tampil sebagai terverifikasi.</p>
     </div>
+  </div>
 
-    {# ── Tanggal, Lokasi, Peran, Jenis ─────────────────────────────────────── #}
-    <div class="manual-fields" id="manual-fields">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-        <div class="form-field">
-          <label class="form-label" for="tanggal_mulai">Tanggal mulai <span style="color:var(--c-accent)">*</span></label>
-          <input type="date" id="tanggal_mulai" name="tanggal_mulai" required>
+  <section class="card">
+    <form method="post" action="{% url 'riwayat_catat' %}" id="form-catat">
+      {% csrf_token %}
+      <input type="hidden" name="kegiatan_id" id="field-kegiatan-id" value="">
+
+      <div class="form-field" id="field-judul-wrap">
+        <label class="form-label" for="kegiatan-search-input">Nama kegiatan</label>
+        <div class="kegiatan-search-wrap">
+          <div class="input-icon">
+            <svg class="ico" aria-hidden="true"><use href="#i-cari"/></svg>
+            <input type="text" id="kegiatan-search-input" name="judul" required autocomplete="off"
+                   placeholder="Ketik nama kegiatan" aria-describedby="judul-hint"
+                   role="combobox" aria-controls="kegiatan-list-box" aria-autocomplete="list">
+          </div>
+          <div class="kegiatan-list-box" id="kegiatan-list-box" role="listbox"></div>
         </div>
-        <div class="form-field">
-          <label class="form-label" for="tanggal_selesai">Tanggal selesai</label>
-          <input type="date" id="tanggal_selesai" name="tanggal_selesai">
-          <p class="form-hint">Kosongkan jika sehari.</p>
+        <div class="selected-kegiatan" id="selected-kegiatan-card" aria-live="polite">
+          <svg class="ico" aria-hidden="true"><use href="#i-kegiatan"/></svg>
+          <div class="selected-kegiatan-info">
+            <div class="selected-kegiatan-title" id="selected-kegiatan-title"></div>
+            <div class="selected-kegiatan-meta" id="selected-kegiatan-meta"></div>
+          </div>
+          <button type="button" class="clear-selection-btn" id="clear-selection-btn">Ganti</button>
         </div>
-        <div class="form-field">
-          <label class="form-label" for="lokasi">Lokasi <span class="meta" style="font-weight:400">(opsional)</span></label>
-          <input type="text" id="lokasi" name="lokasi" maxlength="255" placeholder="Contoh: Jakarta / Daring">
+        <p class="form-hint" id="judul-hint">Kegiatan resmi WMID muncul saat kamu mengetik. Tidak ada di daftar? Tulis saja namanya, lalu isi detailnya di bawah.</p>
+      </div>
+
+      <div class="manual-fields" id="manual-fields">
+        <p class="group-title">Detail kegiatan</p>
+        <div class="fields-3">
+          <div class="form-field">
+            <label class="form-label" for="tanggal_mulai">Tanggal mulai</label>
+            <input type="date" id="tanggal_mulai" name="tanggal_mulai" required>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="tanggal_selesai">Tanggal selesai <span class="opt">(opsional)</span></label>
+            <input type="date" id="tanggal_selesai" name="tanggal_selesai" aria-describedby="selesai-hint">
+            <p class="form-hint" id="selesai-hint">Kosongkan kalau kegiatannya hanya sehari.</p>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="lokasi">Lokasi <span class="opt">(opsional)</span></label>
+            <input type="text" id="lokasi" name="lokasi" maxlength="255" placeholder="Nama kota, atau Daring">
+          </div>
         </div>
       </div>
-    </div>
 
-    {# ── Peran + Jenis dalam satu baris ────────────────────────────────────── #}
-    <div style="display:flex;gap:12px">
-      <div class="form-field" style="flex:1;margin-bottom:0">
-        <label class="form-label" for="role">Peranmu di kegiatan ini</label>
-        <select id="role" name="role">
-          {% for val, label in role_choices %}
-            <option value="{{ val }}">{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="manual-fields" id="manual-fields-jenis" style="flex:1;margin:0">
-        <div class="form-field" style="margin-bottom:0">
-          <label class="form-label" for="jenis_kegiatan">Jenis kegiatan <span class="meta" style="font-weight:400">(opsional)</span></label>
-          <select id="jenis_kegiatan" name="jenis_kegiatan">
-            <option value="">— Pilih jenis —</option>
-            {% for val, label in jenis_choices %}
+      <div class="fields-2">
+        <div class="form-field">
+          <label class="form-label" for="role">Peranmu</label>
+          <select id="role" name="role">
+            {% for val, label in role_choices %}
             <option value="{{ val }}">{{ label }}</option>
             {% endfor %}
           </select>
         </div>
+        <div class="manual-fields" id="manual-fields-jenis">
+          <div class="form-field">
+            <label class="form-label" for="jenis_kegiatan">Jenis kegiatan <span class="opt">(opsional)</span></label>
+            <select id="jenis_kegiatan" name="jenis_kegiatan">
+              <option value="">Pilih jenis kegiatan</option>
+              {% for val, label in jenis_choices %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
       </div>
-    </div>
 
-    {# ── Catatan ────────────────────────────────────────────────────────────── #}
-    <div class="form-field">
-      <label class="form-label" for="catatan">Keterangan <span class="meta" style="font-weight:400">(opsional)</span></label>
-      <input type="text" id="catatan" name="catatan" maxlength="200"
-             placeholder="Tautan laporan, halaman Meta, atau catatan lainnya">
-      <p class="form-hint">Maks. 200 karakter.</p>
-    </div>
-
-    {# ── Komunitas terkait ────────────────────────────────────────────────── #}
-    <div class="manual-fields" id="manual-fields-komunitas">
-      <div class="section-divider"></div>
-      <p style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c-text-muted);margin-bottom:6px">Komunitas terkait <span style="font-weight:400;text-transform:none;letter-spacing:0">(opsional)</span></p>
-      <div class="komunitas-chips" id="komunitas-chips"></div>
-      <div class="komunitas-search-wrap" id="komunitas-add-wrap">
-        <input type="text" id="komunitas-add-input" placeholder="Cari komunitas…"
-               style="width:100%;box-sizing:border-box" autocomplete="off">
-        <div class="komunitas-dd" id="komunitas-dd"></div>
+      <div class="form-field">
+        <label class="form-label" for="catatan">Keterangan untuk pengurus <span class="opt">(opsional)</span></label>
+        <input type="text" id="catatan" name="catatan" maxlength="200" aria-describedby="catatan-hint"
+               placeholder="Misalnya tautan laporan atau halaman Meta kegiatan">
+        <p class="form-hint" id="catatan-hint">Maksimal 200 karakter.</p>
       </div>
-    </div>
 
-    <div style="margin-top:20px">
-      <button type="submit" class="btn btn-primary">Kirim untuk diverifikasi</button>
-      <a href="{% url 'profile' %}" class="btn btn-secondary" style="margin-left:8px">Batal</a>
-    </div>
-  </form>
-</div>
+      <div class="manual-fields" id="manual-fields-komunitas">
+        <div class="form-field" style="margin-bottom:0">
+          <label class="form-label" for="komunitas-add-input">Komunitas terkait <span class="opt">(opsional)</span></label>
+          <div class="komunitas-chips" id="komunitas-chips"></div>
+          <div class="komunitas-search-wrap" id="komunitas-add-wrap">
+            <div class="input-icon">
+              <svg class="ico" aria-hidden="true"><use href="#i-cari"/></svg>
+              <input type="text" id="komunitas-add-input" placeholder="Cari komunitas" autocomplete="off">
+            </div>
+            <div class="komunitas-dd" id="komunitas-dd"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="save-bar">
+        <button type="submit" class="btn btn-primary">Kirim untuk diverifikasi</button>
+        <a href="{% url 'profile' %}" class="btn btn-secondary">Batal</a>
+      </div>
+    </form>
+  </section>
 
 {# ── Data JSON ─────────────────────────────────────────────────────────────── #}
 <script type="application/json" id="wmid-kegiatan-data">
@@ -263,8 +199,8 @@
     listBox.innerHTML = items.map(k => {
       const meta = [k.tanggal, k.lokasi].filter(Boolean).join(' · ');
       const badge = k.type === 'other'
-        ? `<span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;background:var(--c-bg);color:var(--c-text-muted);border:1px solid var(--c-border);margin-left:6px">Kegiatan lainnya</span>`
-        : ``;
+        ? `<span class="chip chip-sm" style="margin-left:6px;vertical-align:1px">Dicatat anggota</span>`
+        : `<span class="chip chip-sm chip-soft" style="margin-left:6px;vertical-align:1px">Resmi WMID</span>`;
       return `<div class="kegiatan-option" role="option" data-id="${k.id}" tabindex="-1">
         <div class="kegiatan-option-title">${k.judul}${badge}</div>
         ${meta ? `<div class="kegiatan-option-meta">${meta}</div>` : ''}
@@ -286,6 +222,7 @@
     selectedTitle.textContent = k.judul;
     selectedMeta.textContent  = [k.tanggal, k.lokasi].filter(Boolean).join(' · ');
     selectedCard.classList.add('is-visible');
+    searchInput.closest('.kegiatan-search-wrap').classList.add('is-hidden');
     manualFields.classList.add('is-hidden');
     manualJenis.classList.add('is-hidden');
     manualKomunitas.classList.add('is-hidden');
@@ -299,6 +236,7 @@
     searchInput.value       = '';
     searchInput.readOnly    = false;
     selectedCard.classList.remove('is-visible');
+    searchInput.closest('.kegiatan-search-wrap').classList.remove('is-hidden');
     manualFields.classList.remove('is-hidden');
     manualJenis.classList.remove('is-hidden');
     manualKomunitas.classList.remove('is-hidden');
@@ -336,7 +274,7 @@
     addedKomIds.add(k.id);
     const chip = document.createElement('span');
     chip.className = 'komunitas-chip';
-    chip.innerHTML = `${k.nama}<button type="button" aria-label="Hapus">&#10005;</button><input type="hidden" name="komunitas_id" value="${k.id}">`;
+    chip.innerHTML = `${k.nama}<button type="button" aria-label="Lepaskan ${k.nama}">&#10005;</button><input type="hidden" name="komunitas_id" value="${k.id}">`;
     chip.querySelector('button').addEventListener('click', () => {
       addedKomIds.delete(k.id);
       chip.remove();
@@ -348,10 +286,10 @@
 
   function renderKomDropdown(items) {
     if (!items.length) {
-      komDropdown.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--c-text-muted)">Komunitas tidak ditemukan.</div>';
+      komDropdown.innerHTML = '<div class="combo-empty">Tidak ada komunitas yang cocok.</div>';
     } else {
       komDropdown.innerHTML = items.map(k =>
-        `<div class="komunitas-dd-item" data-id="${k.id}">${k.nama} <span style="font-size:11px;color:var(--c-text-muted)">${k.kode}</span></div>`
+        `<div class="komunitas-dd-item" data-id="${k.id}"><span style="font-weight:700">${k.nama}</span> <span class="code">${k.kode}</span></div>`
       ).join('');
       komDropdown.querySelectorAll('.komunitas-dd-item').forEach(el => {
         el.addEventListener('click', () => addKomChip(ALL_KOMUNITAS.find(k => k.id === parseInt(el.dataset.id))));
@@ -373,6 +311,5 @@
 
 })();
 </script>
-
 </div>
 {% endblock %}

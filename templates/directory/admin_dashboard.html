@@ -1,227 +1,206 @@
 {% extends "directory/base.html" %}
-{% block title %}Dashboard Admin — WMID{% endblock %}
+{% load directory_tags %}
+{% block title %}Ringkasan · Pengurus WMID{% endblock %}
+{% block body_class %}density-meja{% endblock %}
 
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .queue-banner { display:flex; align-items:center; gap: var(--s-4); flex-wrap: wrap; padding: var(--s-4) var(--s-5); border-radius: var(--r-card); background: var(--primary-soft); margin-bottom: var(--s-6); }
+  .queue-banner p { flex: 1 1 240px; font-weight: 600; }
+  .queue-banner b { font-size: var(--t-22); font-weight: 800; margin-right: 4px; font-variant-numeric: tabular-nums; }
+  .queue-ok { display:flex; align-items:center; gap: var(--s-2); color: var(--muted); font-size: var(--t-14); margin-bottom: var(--s-6); }
+  .queue-ok .ico { color: var(--success); }
+
+  .quick { display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .quick a { display:grid; gap: 2px; padding: var(--s-5) var(--s-6); color: var(--ink); text-decoration: none; border-left: 1px solid var(--line); }
+  .quick a:first-child { border-left: 0; }
+  .quick a:hover { background: var(--subtle); }
+  .quick b { font-size: var(--t-28); font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .quick .q-name { font-weight: 800; display:flex; align-items:center; gap: 4px; }
+  .quick .q-name .ico { width: 16px; height: 16px; color: var(--primary); }
+  .quick .q-desc { font-size: var(--t-13); color: var(--muted); }
+
+  .dash-grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-5); }
+  .dash-grid .card + .card { margin-top: 0; }
+  .chart-box { position: relative; height: 220px; margin-top: var(--s-3); }
+
+  .avail-bar { display:flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--subtle); margin: var(--s-4) 0 var(--s-3); }
+  .avail-bar span { display:block; height: 100%; }
+  .avail-bar .b-aktif { background: var(--success); }
+  .avail-bar .b-sibuk { background: var(--busy); }
+  .avail-bar .b-tidak { background: var(--idle); }
+  .avail-legend { display:grid; gap: 6px; }
+  .avail-legend div { display:flex; align-items:center; justify-content:space-between; gap: var(--s-3); font-size: var(--t-14); }
+  .avail-legend b { font-variant-numeric: tabular-nums; }
+
+  .mini-list { list-style: none; margin: 0; padding: 0; }
+  .mini-list li { display:flex; align-items:center; gap: var(--s-3); padding: 10px 0; border-top: 1px solid var(--line); }
+  .mini-list li:first-child { border-top: 0; }
+  .mini-list .ml-main { flex: 1; min-width: 0; }
+  .mini-list .ml-main a { font-weight: 700; color: var(--ink); text-decoration: none; }
+  .mini-list .ml-main a:hover { text-decoration: underline; }
+  .mini-list .ml-end { font-size: var(--t-13); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  .dash-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 1080px) { .dash-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dash-3 > :first-child { grid-column: 1 / -1; } }
+  @media (max-width: 860px) { .dash-grid, .dash-3 { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 720px) {
+    .quick { grid-template-columns: minmax(0, 1fr); }
+    .quick a { border-left: 0; border-top: 1px solid var(--line); grid-template-columns: minmax(0,1fr) auto; align-items:center; padding: var(--s-3) var(--s-4); }
+    .quick a:first-child { border-top: 0; }
+    .quick b { grid-column: 2; grid-row: 1 / span 2; font-size: var(--t-22); }
+    .chart-box { height: 180px; }
+    .dash-grid { gap: var(--s-4); margin-top: var(--s-4); }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="page-content">
-{% include "directory/_admin_nav.html" %}
+  {% include "directory/_admin_nav.html" %}
 
-<div class="page-header" style="margin-bottom:20px">
-  <div>
-    <h1 class="page-title">Ringkasan</h1>
-    <p style="font-size:13px;color:var(--c-text-muted);margin-top:2px">Direktori Anggota WMID</p>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Ringkasan</h1>
+      <p class="page-sub">Yang perlu kamu tahu hari ini</p>
+    </div>
   </div>
+
   {% if pending_count > 0 %}
-  <div class="page-header-actions">
-    <a href="{% url 'admin_verifikasi' %}" class="btn btn-secondary btn-sm">
-      Verifikasi data
-      <span style="background:var(--c-accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:2px">{{ pending_count }}</span>
-    </a>
+  <div class="queue-banner" role="status">
+    <p><b>{{ pending_count }}</b> permintaan menunggu verifikasi</p>
+    <a href="{% url 'admin_verifikasi' %}" class="btn btn-primary">Buka antrean</a>
   </div>
+  {% else %}
+  <p class="queue-ok"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg>Antrean verifikasi kosong.</p>
   {% endif %}
-</div>
 
+  <nav class="card card-flush quick" aria-label="Data utama">
+    <a href="{% url 'admin_anggota' %}">
+      <b>{{ total_anggota }}</b>
+      <span class="q-name">Anggota<svg class="ico" aria-hidden="true"><use href="#i-kanan"/></svg></span>
+      <span class="q-desc">Cari anggota menurut riwayat dan ketersediaan</span>
+    </a>
+    <a href="{% url 'admin_komunitas' %}">
+      <b>{{ total_komunitas }}</b>
+      <span class="q-name">Komunitas<svg class="ico" aria-hidden="true"><use href="#i-kanan"/></svg></span>
+      <span class="q-desc">Anggota dan kegiatan tiap komunitas</span>
+    </a>
+    <a href="{% url 'admin_kegiatan_data' %}">
+      <b>{{ total_kegiatan }}</b>
+      <span class="q-name">Kegiatan resmi<svg class="ico" aria-hidden="true"><use href="#i-kanan"/></svg></span>
+      <span class="q-desc">Kegiatan yang tercatat di direktori</span>
+    </a>
+  </nav>
 
-<!-- Quick nav cards -->
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;align-items:stretch">
-  <a href="{% url 'admin_anggota' %}" style="text-decoration:none;display:flex">
-    <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow .15s;display:flex;flex-direction:column;width:100%" onmouseover="this.style.boxShadow='var(--shadow-elevated)'" onmouseout="this.style.boxShadow='var(--shadow-card)'">
-      <div style="font-size:22px;font-weight:700;color:var(--c-primary);margin-bottom:4px">{{ total_anggota }}</div>
-      <div style="font-size:13px;font-weight:600;color:var(--c-text)">Anggota</div>
-      <div style="font-size:12px;color:var(--c-text-muted);margin-top:2px;flex:1">Lihat, cari, dan filter semua anggota</div>
-      <div style="font-size:12px;color:var(--c-primary);margin-top:10px;font-weight:500">Buka daftar &rarr;</div>
-    </div>
-  </a>
-  <a href="{% url 'admin_komunitas' %}" style="text-decoration:none;display:flex">
-    <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow .15s;display:flex;flex-direction:column;width:100%" onmouseover="this.style.boxShadow='var(--shadow-elevated)'" onmouseout="this.style.boxShadow='var(--shadow-card)'">
-      <div style="font-size:22px;font-weight:700;color:var(--c-primary);margin-bottom:4px">{{ total_komunitas }}</div>
-      <div style="font-size:13px;font-weight:600;color:var(--c-text)">Komunitas</div>
-      <div style="font-size:12px;color:var(--c-text-muted);margin-top:2px;flex:1">Statistik anggota dan kegiatan tiap komunitas</div>
-      <div style="font-size:12px;color:var(--c-primary);margin-top:10px;font-weight:500">Buka daftar &rarr;</div>
-    </div>
-  </a>
-  <a href="{% url 'admin_kegiatan_data' %}" style="text-decoration:none;display:flex">
-    <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow .15s;display:flex;flex-direction:column;width:100%" onmouseover="this.style.boxShadow='var(--shadow-elevated)'" onmouseout="this.style.boxShadow='var(--shadow-card)'">
-      <div style="font-size:22px;font-weight:700;color:var(--c-primary);margin-bottom:4px">{{ total_kegiatan }}</div>
-      <div style="font-size:13px;font-weight:600;color:var(--c-text)">Kegiatan</div>
-      <div style="font-size:12px;color:var(--c-text-muted);margin-top:2px;flex:1">Kegiatan resmi yang tercatat di direktori</div>
-      <div style="font-size:12px;color:var(--c-primary);margin-top:10px;font-weight:500">Buka daftar &rarr;</div>
-    </div>
-  </a>
-</div>
-
-<!-- Charts -->
-<div class="card" style="padding:20px;margin-bottom:16px">
-  <p class="section-label" style="margin:0 0 2px">Kegiatan berlangsung</p>
-  <p style="font-size:11px;color:var(--c-text-muted);margin:0 0 16px">12 bulan terakhir</p>
-  <canvas id="chartKegiatan" height="80"></canvas>
-</div>
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px">
-  <div class="card" style="padding:20px">
-    <p class="section-label" style="margin:0 0 2px">Anggota baru</p>
-    <p style="font-size:11px;color:var(--c-text-muted);margin:0 0 16px">12 bulan terakhir</p>
-    <canvas id="chartMembers" height="140"></canvas>
+  <div class="dash-grid">
+    <section class="card">
+      <h2>Kegiatan resmi per bulan</h2>
+      <p class="meta">12 bulan terakhir</p>
+      <div class="chart-box"><canvas id="chartKegiatan" role="img" aria-label="Grafik batang jumlah kegiatan resmi per bulan, 12 bulan terakhir"></canvas></div>
+    </section>
+    <section class="card">
+      <h2>Anggota baru per bulan</h2>
+      <p class="meta">12 bulan terakhir</p>
+      <div class="chart-box"><canvas id="chartMembers" role="img" aria-label="Grafik batang jumlah anggota baru per bulan, 12 bulan terakhir"></canvas></div>
+    </section>
   </div>
-  <div class="card" style="padding:20px;margin-top:0">
-    <p class="section-label" style="margin:0 0 2px">Status anggota</p>
-    <p style="font-size:11px;color:var(--c-text-muted);margin:0 0 16px">Distribusi ketersediaan</p>
-    <div style="max-width:300px;margin:0 auto">
-      <canvas id="chartAvail"></canvas>
-    </div>
+
+  {{ chart_labels|json_script:"d-labels" }}
+  {{ chart_members|json_script:"d-members" }}
+  {{ chart_kegiatan|json_script:"d-kegiatan" }}
+  {{ chart_avail|json_script:"d-avail" }}
+
+  <div class="dash-grid dash-3">
+    <section class="card">
+      <h2>Ketersediaan anggota saat ini</h2>
+      <p class="meta">Dari {{ total_anggota }} anggota terdaftar</p>
+      {% with total=avail_aktif|add:avail_sibuk|add:avail_tidak %}
+      <div class="avail-bar" aria-hidden="true">
+        {% if total %}
+        <span class="b-aktif" style="width:{% widthratio avail_aktif total 100 %}%"></span>
+        <span class="b-sibuk" style="width:{% widthratio avail_sibuk total 100 %}%"></span>
+        <span class="b-tidak" style="width:{% widthratio avail_tidak total 100 %}%"></span>
+        {% endif %}
+      </div>
+      {% endwith %}
+      <div class="avail-legend">
+        <div><span class="avail is-aktif">Bisa diajak</span><b>{{ avail_aktif }}</b></div>
+        <div><span class="avail is-sibuk">Sedang sibuk</span><b>{{ avail_sibuk }}</b></div>
+        <div><span class="avail is-tidak_aktif">Tidak aktif</span><b>{{ avail_tidak }}</b></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head" style="margin-bottom:var(--s-2)">
+        <div><h2>Kegiatan terbaru</h2></div>
+        <a href="{% url 'admin_kegiatan_data' %}" class="btn btn-quiet btn-sm">Lihat semua</a>
+      </div>
+      <ul class="mini-list">
+        {% for k in recent_kegiatan %}
+        <li>
+          <div class="ml-main">
+            <a href="{% url 'kegiatan_detail' k.kode %}">{{ k.judul }}</a>
+            <div class="meta num">{{ k.tanggal_mulai|date:"d M Y" }}</div>
+          </div>
+          <span class="ml-end">{{ k.peserta_count }} peserta</span>
+        </li>
+        {% empty %}
+        <li class="empty-inline">Belum ada kegiatan resmi. Sinkronkan dari halaman Kegiatan.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-head" style="margin-bottom:var(--s-2)">
+        <div><h2>Komunitas terbesar</h2></div>
+        <a href="{% url 'admin_komunitas' %}" class="btn btn-quiet btn-sm">Lihat semua</a>
+      </div>
+      <ul class="mini-list">
+        {% for k in komunitas_top %}
+        <li>
+          <span class="logo-box" style="width:32px;height:32px;font-size:var(--t-12)" aria-hidden="true">{% if k.logo %}<img src="{{ k.logo }}" alt="" loading="lazy">{% else %}{{ k.nama_komunitas|initials }}{% endif %}</span>
+          <div class="ml-main"><span style="font-weight:700">{{ k.nama_komunitas }}</span></div>
+          <span class="ml-end">{{ k.anggota_count }} anggota</span>
+        </li>
+        {% empty %}
+        <li class="empty-inline">Belum ada komunitas.</li>
+        {% endfor %}
+      </ul>
+    </section>
   </div>
 </div>
-
-{{ chart_labels|json_script:"d-labels" }}
-{{ chart_members|json_script:"d-members" }}
-{{ chart_kegiatan|json_script:"d-kegiatan" }}
-{{ chart_avail|json_script:"d-avail" }}
 
 <script>
 (function () {
+  if (!window.Chart) return;
   const labels   = JSON.parse(document.getElementById('d-labels').textContent);
   const members  = JSON.parse(document.getElementById('d-members').textContent);
   const kegiatan = JSON.parse(document.getElementById('d-kegiatan').textContent);
-  const avail    = JSON.parse(document.getElementById('d-avail').textContent);
 
-  Chart.defaults.font.family = 'inherit';
-  const MUTED   = '#757580';
-  const BORDER  = '#E2DDD8';
-  const axisOpts = {
-    grid: { color: BORDER },
-    ticks: { color: MUTED, font: { size: 10 }, maxTicksLimit: 6 },
-    beginAtZero: true,
-  };
-  const baseOpts = {
+  const css = getComputedStyle(document.documentElement);
+  const tok = n => css.getPropertyValue(n).trim();
+  const PRIMARY = tok('--primary'), MUTED = tok('--muted'), LINE = tok('--line');
+
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  const small = window.matchMedia('(max-width: 720px)').matches;
+  const opts = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-    scales: { x: axisOpts, y: axisOpts },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: MUTED, font: { size: 11 }, autoSkip: true, maxTicksLimit: small ? 6 : 12, maxRotation: 0 } },
+      y: { grid: { color: LINE }, border: { display: false }, ticks: { color: MUTED, font: { size: 11 }, precision: 0, maxTicksLimit: 5 }, beginAtZero: true },
+    },
   };
-
-  new Chart(document.getElementById('chartMembers'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: members,
-        borderColor: '#2356A2',
-        backgroundColor: 'rgba(35,86,162,0.08)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        pointBackgroundColor: '#2356A2',
-        borderWidth: 2,
-      }],
-    },
-    options: baseOpts,
-  });
-
-  new Chart(document.getElementById('chartKegiatan'), {
+  const bar = (el, data, label) => new Chart(document.getElementById(el), {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        data: kegiatan,
-        backgroundColor: 'rgba(192,92,0,0.65)',
-        borderColor: '#C05C00',
-        borderWidth: 1,
-        borderRadius: 3,
-        borderSkipped: false,
-      }],
-    },
-    options: baseOpts,
+    data: { labels, datasets: [{ label, data, backgroundColor: PRIMARY, borderRadius: 4, maxBarThickness: 28 }] },
+    options: opts,
   });
-
-  new Chart(document.getElementById('chartAvail'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Aktif', 'Sibuk', 'Tidak aktif'],
-      datasets: [{
-        data: avail,
-        backgroundColor: ['#1A6B3C', '#B91C1C', '#D97706'],
-        borderWidth: 2,
-        borderColor: '#fff',
-        hoverOffset: 6,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'bottom',
-          labels: { font: { size: 11 }, color: '#4A4A50', boxWidth: 10, padding: 12 },
-        },
-        tooltip: { mode: 'index', intersect: true },
-      },
-    },
-  });
+  bar('chartKegiatan', kegiatan, 'Kegiatan');
+  bar('chartMembers', members, 'Anggota baru');
 })();
 </script>
-
-<!-- Bottom: kegiatan terbaru + komunitas terbesar -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch">
-
-  <div class="card" style="padding:20px;display:flex;flex-direction:column;min-width:0;overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0">
-      <p class="section-label" style="margin:0">Kegiatan terbaru</p>
-      <a href="{% url 'admin_kegiatan_data' %}" style="font-size:12px;color:var(--c-primary)">Lihat semua</a>
-    </div>
-    <div style="flex:1;min-height:0;overflow-y:auto">
-    {% for k in recent_kegiatan %}
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--c-border)">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-          <a href="{% url 'kegiatan_detail' k.kode %}" style="color:var(--c-text)">{{ k.judul }}</a>
-        </div>
-        <div style="font-size:11px;color:var(--c-text-muted);margin-top:1px">{{ k.tanggal_mulai|date:"d M Y" }}</div>
-      </div>
-      <span style="font-size:11px;font-weight:600;color:var(--c-primary);flex-shrink:0">{{ k.peserta_count }} peserta</span>
-    </div>
-    {% empty %}
-    <p class="meta">Belum ada kegiatan.</p>
-    {% endfor %}
-    </div>
-  </div>
-
-  <div class="card" style="padding:20px;display:flex;flex-direction:column;margin-top:0;min-width:0;overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0">
-      <p class="section-label" style="margin:0">Komunitas terbesar</p>
-      <a href="{% url 'admin_komunitas' %}" style="font-size:12px;color:var(--c-primary)">Lihat semua</a>
-    </div>
-    <div style="flex:1;min-height:0;overflow-y:auto">
-    {% for k in komunitas_top %}
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--c-border)">
-      {% if k.logo %}
-        <img src="{{ k.logo }}" alt="" style="width:24px;height:24px;border-radius:5px;object-fit:contain;border:1px solid var(--c-border);flex-shrink:0">
-      {% else %}
-        <div style="width:24px;height:24px;border-radius:5px;background:var(--c-primary);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ k.nama_komunitas|first|upper }}</div>
-      {% endif %}
-      <span style="flex:1;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ k.nama_komunitas }}</span>
-      <span style="font-weight:700;color:var(--c-primary);font-size:13px;flex-shrink:0">{{ k.anggota_count }} anggota</span>
-    </div>
-    {% empty %}
-    <p class="meta">Belum ada data.</p>
-    {% endfor %}
-    </div>
-  </div>
-
-</div>
-
-</div>
-
-<style>
-  @media (max-width:640px) {
-    div[style*="repeat(4,1fr)"] { grid-template-columns:repeat(2,1fr) !important; }
-    div[style*="repeat(3,1fr)"] { grid-template-columns:1fr !important; }
-    div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; gap:12px !important; }
-    canvas { max-width:100% !important; }
-  }
-</style>
 {% endblock %}

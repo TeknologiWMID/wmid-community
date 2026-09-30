@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup Antrean Verifikasi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="serambi.css">
+<style>
+/* Antrean: satu kolom sempit agar mata bergerak lurus ke bawah. Tiap permintaan = satu kartu dengan dua keputusan di tempat jempol. */
+.demo-note { background: var(--accent); color: #15282A; font-size: var(--t-13); font-weight: 600; text-align:center; padding: 6px 16px; }
+.admintabs { background: var(--surface); border-bottom: 1px solid var(--line); }
+.admintabs-in { max-width: var(--max-app); margin: 0 auto; padding-inline: var(--s-4); display:flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.admintabs a { display:inline-flex; align-items:center; gap:8px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: var(--t-14); color: var(--ink-2); text-decoration:none; white-space:nowrap; }
+.admintabs a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -3px 0 var(--primary); }
+.count { display:inline-grid; place-items:center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--accent); color: #15282A; font-size: 12px; font-weight: 800; }
+
+.queue { max-width: 760px; margin: 0 auto; }
+.lede { color: var(--muted); margin-top: 6px; }
+.group { margin-top: var(--s-8); }
+.group h2 { display:flex; align-items:center; gap: var(--s-2); }
+.group h2 .n { font-size: var(--t-14); color: var(--muted); font-weight: 700; }
+.group > p { color: var(--muted); font-size: var(--t-14); margin-top: 4px; }
+.req-list { list-style:none; margin: var(--s-4) 0 0; padding: 0; display:grid; gap: var(--s-3); }
+.req { padding: var(--s-4) var(--s-5); display:grid; grid-template-columns: minmax(0,1fr) auto; gap: var(--s-4); align-items: center; }
+.req-who { display:flex; gap: var(--s-3); align-items:flex-start; min-width:0; }
+.req-name { font-weight: 800; }
+.req-what { margin-top: 2px; font-size: var(--t-14); color: var(--ink-2); }
+.req-what a { font-weight: 700; }
+.req-meta { display:flex; flex-wrap: wrap; gap: 6px 12px; align-items:center; margin-top: 8px; }
+.quote { margin-top: 10px; padding: 8px 12px; border-radius: var(--r-control); background: var(--subtle); font-size: var(--t-14); color: var(--ink-2); overflow-wrap:anywhere; }
+.quote b { display:block; font-size: var(--t-12); color: var(--muted); }
+.decide { display:flex; gap: var(--s-2); }
+.decide form { display: contents; }
+.type-tag { font-size: var(--t-12); font-weight: 800; letter-spacing: .03em; padding: 2px 8px; border-radius: var(--r-control); }
+.tag-in  { background: var(--success-soft); color: var(--success); }
+.tag-out { background: var(--danger-soft); color: var(--danger); }
+
+.empty { text-align:center; padding: var(--s-10) var(--s-5); }
+.empty .cap { width: 64px; height: 64px; margin: 0 auto var(--s-4); outline-offset: -10px; }
+.empty .cap svg { width: 26px; height: 26px; }
+.empty p { color: var(--muted); max-width: 42ch; margin: 6px auto 0; }
+
+@media (max-width: 720px) {
+  .req { grid-template-columns: minmax(0,1fr); padding: var(--s-4); }
+  .decide { display:grid; grid-template-columns: 1fr 1fr; }
+  .decide .btn { width: 100%; min-height: 48px; }
+  .group { margin-top: var(--s-6); }
+}
+</style>
+</head>
+<body class="density-meja has-bottomnav">
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<defs><style>.ic{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}.tn{fill:var(--primary-soft);stroke:none}</style></defs>
+<symbol id="i-profil" viewBox="0 0 24 24"><circle class="tn" cx="12" cy="8" r="4"/><circle class="ic" cx="12" cy="8" r="4"/><path class="ic" d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></symbol>
+<symbol id="i-komunitas" viewBox="0 0 24 24"><circle class="tn" cx="9" cy="9" r="3.2"/><circle class="ic" cx="9" cy="9" r="3.2"/><circle class="ic" cx="16.5" cy="10" r="2.5"/><path class="ic" d="M3 19.5c.9-3 3.1-4.6 6-4.6s5.1 1.6 6 4.6M15 15.2c.5-.1 1-.2 1.5-.2 2.3 0 4 1.3 4.6 3.8"/></symbol>
+<symbol id="i-kegiatan" viewBox="0 0 24 24"><rect class="tn" x="4" y="8.5" width="16" height="4"/><rect class="ic" x="4" y="5" width="16" height="15" rx="2"/><path class="ic" d="M4 9.5h16M8.5 3v4M15.5 3v4"/></symbol>
+<symbol id="i-pengurus" viewBox="0 0 24 24"><rect class="tn" x="6" y="4" width="12" height="4" rx="1"/><rect class="ic" x="5" y="5" width="14" height="16" rx="2"/><path class="ic" d="M9 3.5h6v3H9zM8.5 12.5l2 2 4-4M8.5 17.5h7"/></symbol>
+<symbol id="i-cari" viewBox="0 0 24 24"><circle class="ic" cx="11" cy="11" r="6.5"/><path class="ic" d="M16 16l4.5 4.5"/></symbol>
+<symbol id="i-saring" viewBox="0 0 24 24"><path class="ic" d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle class="ic" cx="16" cy="7" r="2"/><circle class="ic" cx="10" cy="17" r="2"/></symbol>
+<symbol id="i-cek" viewBox="0 0 24 24"><path class="ic" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-jam" viewBox="0 0 24 24"><circle class="ic" cx="12" cy="12" r="8"/><path class="ic" d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path class="ic" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-tambah" viewBox="0 0 24 24"><path class="ic" d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-luar" viewBox="0 0 24 24"><path class="ic" d="M14 4h6v6M20 4l-8.5 8.5M18 14v4.5A1.5 1.5 0 0116.5 20h-11A1.5 1.5 0 014 18.5v-11A1.5 1.5 0 015.5 6H10"/></symbol>
+<symbol id="i-lokasi" viewBox="0 0 24 24"><path class="ic" d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle class="ic" cx="12" cy="10" r="2.3"/></symbol>
+<symbol id="i-surat" viewBox="0 0 24 24"><rect class="ic" x="3.5" y="5.5" width="17" height="13" rx="2"/><path class="ic" d="M4 7l8 6 8-6"/></symbol>
+<symbol id="i-telepon" viewBox="0 0 24 24"><rect class="ic" x="7" y="3" width="10" height="18" rx="2.2"/><path class="ic" d="M10.5 17.5h3"/></symbol>
+<symbol id="i-sinkron" viewBox="0 0 24 24"><path class="ic" d="M19 12a7 7 0 01-12.2 4.7M5 12a7 7 0 0112.2-4.7M17.5 3.5v4h-4M6.5 20.5v-4h4"/></symbol>
+<symbol id="i-ubah" viewBox="0 0 24 24"><path class="ic" d="M14.5 5.5l4 4M4 20l1-4.5L15.5 5a2 2 0 012.9 0l.6.6a2 2 0 010 2.9L8.5 19 4 20z"/></symbol>
+<symbol id="i-unduh" viewBox="0 0 24 24"><path class="ic" d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></symbol>
+<symbol id="i-kanan" viewBox="0 0 24 24"><path class="ic" d="M9.5 6l6 6-6 6"/></symbol>
+<symbol id="i-bawah" viewBox="0 0 24 24"><path class="ic" d="M6 9.5l6 6 6-6"/></symbol>
+<symbol id="i-kiri" viewBox="0 0 24 24"><path class="ic" d="M14.5 6l-6 6 6 6"/></symbol>
+<symbol id="i-wiki" viewBox="0 0 24 24"><circle class="ic" cx="12" cy="12" r="8.5"/><path class="ic" d="M3.5 12h17M12 3.5c2.3 2.4 3.4 5.2 3.4 8.5s-1.1 6.1-3.4 8.5c-2.3-2.4-3.4-5.2-3.4-8.5S9.7 5.9 12 3.5z"/></symbol>
+<symbol id="r-pelatih" viewBox="0 0 24 24"><rect class="tn" x="4" y="4.5" width="16" height="10"/><rect class="ic" x="3.5" y="4" width="17" height="11" rx="1.5"/><path class="ic" d="M8 20l4-5 4 5M7.5 8.5h6M7.5 11h4"/></symbol>
+<symbol id="r-juri" viewBox="0 0 24 24"><path class="ic" d="M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a2.5 2.5 0 005 0L5 7zM19 7l-2.5 6a2.5 2.5 0 005 0L19 7z"/></symbol>
+<symbol id="r-panitia" viewBox="0 0 24 24"><rect class="ic" x="5" y="4.5" width="14" height="16" rx="2"/><path class="ic" d="M9 9h6M9 12.5h6M9 16h3.5"/></symbol>
+<symbol id="r-narasumber" viewBox="0 0 24 24"><rect class="tn" x="9" y="4" width="6" height="10" rx="3"/><rect class="ic" x="9" y="3.5" width="6" height="11" rx="3"/><path class="ic" d="M6 11.5a6 6 0 0012 0M12 17.5V21"/></symbol>
+<symbol id="r-pj" viewBox="0 0 24 24"><path class="tn" d="M6 4.5h11l-2.5 4 2.5 4H6z"/><path class="ic" d="M6 21V4.5h11l-2.5 4 2.5 4H6"/></symbol>
+<symbol id="r-peserta" viewBox="0 0 24 24"><circle class="ic" cx="12" cy="8.5" r="3.5"/><path class="ic" d="M5.5 20c1-3.3 3.5-5 6.5-5s5.5 1.7 6.5 5"/></symbol>
+<symbol id="r-lainnya" viewBox="0 0 24 24"><circle class="ic" cx="6" cy="12" r="1.3"/><circle class="ic" cx="12" cy="12" r="1.3"/><circle class="ic" cx="18" cy="12" r="1.3"/></symbol>
+</svg>
+
+<div class="demo-note">Mockup konsep. Semua nama dan kegiatan di halaman ini adalah data contoh.</div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#">Direktori Anggota<small>Wikimedia Indonesia</small></a>
+    <nav class="topnav" aria-label="Navigasi utama">
+      <a href="#">Profil</a><a href="#">Komunitas</a><a href="#">Kegiatan</a><a href="#" aria-current="page">Pengurus</a>
+    </nav>
+    <button class="acct" type="button" aria-haspopup="menu" aria-expanded="false" style="margin-left:var(--s-2)">
+      <span class="av" style="width:34px;height:34px;font-size:12px">AC</span><span class="acct-name">Anggota Contoh</span>
+      <svg width="16" height="16"><use href="#i-bawah"/></svg>
+    </button>
+  </div>
+</header>
+<nav class="admintabs" aria-label="Menu pengurus">
+  <div class="admintabs-in">
+    <a href="#">Ringkasan</a><a href="#">Anggota</a><a href="#">Komunitas</a><a href="#">Kegiatan</a>
+    <a href="#" aria-current="page">Verifikasi <span class="count" aria-label="3 menunggu">3</span></a>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="queue">
+    <h1>Menunggu verifikasi</h1>
+    <p class="lede">Periksa tiap permintaan, lalu terima atau tolak. Riwayat yang diterima langsung tampil di profil anggota.</p>
+
+    <section class="group" aria-labelledby="g-kom">
+      <h2 id="g-kom">Keanggotaan komunitas <span class="n">1</span></h2>
+      <ul class="req-list">
+        <li class="panel req">
+          <div class="req-who">
+            <span class="av">AB</span>
+            <div style="min-width:0">
+              <div class="req-name">Anggota Contoh B</div>
+              <div class="req-what">Ingin <strong>bergabung</strong> dengan Komunitas Contoh</div>
+              <div class="req-meta"><span class="type-tag tag-in">GABUNG</span><span class="meta">Dikirim 27 Sep 2026</span></div>
+            </div>
+          </div>
+          <div class="decide">
+            <form><button class="btn btn-secondary" type="button">Tolak</button></form>
+            <form><button class="btn btn-primary" type="button"><svg><use href="#i-cek"/></svg>Terima</button></form>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="group" aria-labelledby="g-kg">
+      <h2 id="g-kg">Riwayat kegiatan <span class="n">2</span></h2>
+      <p>Permintaan yang ditolak akan dihapus dari daftar anggota tersebut.</p>
+      <ul class="req-list">
+        <li class="panel req">
+          <div class="req-who">
+            <span class="av">AC</span>
+            <div style="min-width:0">
+              <div class="req-name">Anggota Contoh A</div>
+              <div class="req-what">Mencatat diri sebagai pelatih di <a href="#">WikiLatih Dasar Wikidata (contoh)</a></div>
+              <div class="req-meta">
+                <span class="chip"><svg><use href="#r-pelatih"/></svg>Pelatih</span>
+                <span class="code">KGT-2026-0012</span>
+                <span class="meta">Dikirim 28 Sep 2026</span>
+              </div>
+              <div class="quote"><b>Keterangan dari anggota</b>Tautan laporan kegiatan ada di halaman Meta komunitas.</div>
+            </div>
+          </div>
+          <div class="decide">
+            <form><button class="btn btn-secondary" type="button">Tolak</button></form>
+            <form><button class="btn btn-primary" type="button"><svg><use href="#i-cek"/></svg>Terima</button></form>
+          </div>
+        </li>
+        <li class="panel req">
+          <div class="req-who">
+            <span class="av">AD</span>
+            <div style="min-width:0">
+              <div class="req-name">Anggota Contoh D</div>
+              <div class="req-what">Mencatat diri sebagai peserta di <a href="#">Kopdar Komunitas Contoh</a></div>
+              <div class="req-meta">
+                <span class="chip"><svg><use href="#r-peserta"/></svg>Peserta</span>
+                <span class="code">KGT-2026-0009</span>
+                <span class="meta">Dikirim 25 Sep 2026</span>
+              </div>
+            </div>
+          </div>
+          <div class="decide">
+            <form><button class="btn btn-secondary" type="button">Tolak</button></form>
+            <form><button class="btn btn-primary" type="button"><svg><use href="#i-cek"/></svg>Terima</button></form>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="group" aria-labelledby="g-empty">
+      <h2 id="g-empty" class="meta" style="font-size:var(--t-13);font-weight:700;letter-spacing:.04em">KONDISI KOSONG (contoh tampilan)</h2>
+      <div class="panel empty" style="margin-top:var(--s-3)">
+        <div class="cap" aria-hidden="true"><svg><use href="#i-cek"/></svg></div>
+        <h2>Antrean sudah bersih</h2>
+        <p>Tidak ada catatan kegiatan atau permintaan komunitas yang menunggu. Permintaan baru dari anggota akan muncul di sini.</p>
+      </div>
+    </section>
+  </div>
+</main>
+<nav class="bottomnav" aria-label="Navigasi utama">
+  <a href="#"><svg><use href="#i-profil"/></svg>Profil</a>
+  <a href="#"><svg><use href="#i-komunitas"/></svg>Komunitas</a>
+  <a href="#"><svg><use href="#i-kegiatan"/></svg>Kegiatan</a>
+  <a href="#" aria-current="page"><svg><use href="#i-pengurus"/></svg>Pengurus</a>
+</nav>
+</body>
+</html>

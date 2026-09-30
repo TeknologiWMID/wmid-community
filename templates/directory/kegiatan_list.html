@@ -1,70 +1,35 @@
 {% extends "directory/base.html" %}
-{% block title %}Kegiatan — WMID Directory{% endblock %}
+{% block title %}Kegiatan · Direktori Anggota WMID{% endblock %}
 
 {% block head %}
 <style>
-  .kegiatan-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
-  }
+  .kegiatan-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--s-4); }
   a.kegiatan-card {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 16px 18px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius);
-    background: var(--c-bg-card);
-    text-decoration: none;
-    color: inherit;
-    transition: border-color .12s, box-shadow .12s;
+    display:grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--s-4); padding: var(--s-4);
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); color: var(--ink); text-decoration: none;
   }
-  a.kegiatan-card:hover { border-color: var(--c-primary); box-shadow: var(--shadow-elevated); }
-  .kegiatan-judul { font-size: 15px; font-weight: 700; line-height: 1.35; letter-spacing: -.01em; }
-  .kegiatan-meta  { font-size: 12px; color: var(--c-text-muted); display: flex; flex-direction: column; gap: 3px; }
-  .status-dot {
-    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; margin-right: 5px;
-  }
-  .dot-aktif  { background: var(--c-success); }
-  .dot-selesai{ background: #9ca3af; }
-  .dot-datang { background: #f59e0b; }
-
-  /* ── Pagination ─────────────────────────────────────────────── */
-  .pagination {
-    display: flex; align-items: center; justify-content: center;
-    gap: 4px; margin-top: 28px; flex-wrap: wrap;
-  }
-  .page-btn {
-    min-width: 36px; height: 36px; padding: 0 10px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border: 1px solid var(--c-border); border-radius: var(--radius-sm);
-    background: var(--c-bg-card); color: var(--c-text-secondary);
-    font-size: 13px; font-weight: 500; text-decoration: none;
-    transition: border-color .1s, background .1s, color .1s;
-  }
-  .page-btn:hover { border-color: var(--c-primary); color: var(--c-primary); background: var(--c-primary-light); }
-  .page-btn.active { background: var(--c-primary); border-color: var(--c-primary); color: #fff; pointer-events: none; }
-  .page-btn.disabled { opacity: .4; pointer-events: none; }
-  .page-ellipsis {
-    min-width: 36px; height: 36px;
-    display: inline-flex; align-items: center; justify-content: center;
-    color: var(--c-text-muted); font-size: 13px;
-  }
+  a.kegiatan-card:hover { border-color: var(--primary); color: var(--ink); }
+  a.kegiatan-card:active { background: var(--subtle); }
+  .kg-date { text-align: center; border-radius: var(--r-control); background: var(--subtle); padding: 8px 4px; line-height: 1.15; align-self: start; }
+  .kg-date b { display:block; font-size: var(--t-22); font-weight: 800; }
+  .kg-date span { font-size: var(--t-12); color: var(--muted); font-weight: 700; }
+  .kegiatan-judul { font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+  .kegiatan-meta { display:flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: var(--t-13); color: var(--muted); align-items: center; }
+  .kg-list-pager { display:flex; justify-content:center; margin-top: var(--s-6); }
+  @media (max-width: 720px) { .kegiatan-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); } .page-btn.pg-num { display: none; } }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-content">
-
   <div class="page-header">
     <div>
       <h1 class="page-title">Kegiatan</h1>
-      <p class="meta">Riwayat dan jadwal kegiatan Wikimedia Indonesia.</p>
+      <p class="page-sub">Kegiatan Wikimedia Indonesia yang sudah lewat dan yang akan datang</p>
     </div>
     {% if member.is_admin %}
     <div class="page-header-actions">
-      <a href="{% url 'sync_kegiatan' %}" class="btn btn-secondary btn-sm">Sinkron API</a>
+      <a href="{% url 'sync_kegiatan' %}" class="btn btn-secondary" aria-label="Sinkronkan dari situs WMID"><svg class="ico" aria-hidden="true"><use href="#i-sinkron"/></svg><span class="btn-label-m">Sinkronkan dari situs WMID</span></a>
     </div>
     {% endif %}
   </div>
@@ -73,63 +38,53 @@
   <div class="kegiatan-grid">
     {% for k in kegiatan %}
     <a href="{% url 'kegiatan_detail' k.kode %}" class="kegiatan-card">
-      <div class="kegiatan-judul">{{ k.judul }}</div>
-      <div class="kegiatan-meta">
-        <span>
-          {% if k.sedang_berlangsung %}
-            <span class="status-dot dot-aktif"></span>Sedang berlangsung
-          {% elif k.sudah_selesai %}
-            <span class="status-dot dot-selesai"></span>Selesai
-          {% else %}
-            <span class="status-dot dot-datang"></span>Akan datang
-          {% endif %}
-        </span>
-        <span>{{ k.tanggal_mulai|date:"d M Y" }}{% if k.tanggal_mulai|date:"d M Y" != k.tanggal_selesai|date:"d M Y" %} – {{ k.tanggal_selesai|date:"d M Y" }}{% endif %}</span>
-        {% if k.lokasi %}<span>{{ k.lokasi }}</span>{% endif %}
+      <div class="kg-date" aria-hidden="true"><b>{{ k.tanggal_mulai|date:"d" }}</b><span>{{ k.tanggal_mulai|date:"M Y" }}</span></div>
+      <div style="min-width:0">
+        <div class="kegiatan-judul">{{ k.judul }}</div>
+        <div class="kegiatan-meta">
+          {% if k.sedang_berlangsung %}<span class="kg-state is-aktif">Sedang berlangsung</span>
+          {% elif k.sudah_selesai %}<span class="kg-state is-selesai">Selesai</span>
+          {% else %}<span class="kg-state is-datang">Akan datang</span>{% endif %}
+          <span class="num">{{ k.tanggal_mulai|date:"d M Y" }}{% if k.tanggal_mulai|date:"d M Y" != k.tanggal_selesai|date:"d M Y" %} - {{ k.tanggal_selesai|date:"d M Y" }}{% endif %}</span>
+          {% if k.lokasi %}<span>{{ k.lokasi }}</span>{% endif %}
+        </div>
+        {% if k.komunitas.exists %}
+        <div class="kegiatan-meta"><span>{{ k.komunitas.first.nama_komunitas }}{% if k.komunitas.count > 1 %} dan {{ k.komunitas.count|add:"-1" }} lainnya{% endif %}</span></div>
+        {% endif %}
       </div>
-      {% if k.komunitas.exists %}
-      <div>
-        <span class="meta" style="font-size:11px">{{ k.komunitas.first.nama_komunitas }}{% if k.komunitas.count > 1 %} +{{ k.komunitas.count|add:"-1" }}{% endif %}</span>
-      </div>
-      {% endif %}
     </a>
     {% endfor %}
   </div>
 
   {% if page_obj.has_other_pages %}
-  <nav class="pagination" aria-label="Navigasi halaman">
-    {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}" class="page-btn" aria-label="Halaman sebelumnya">&#8592;</a>
-    {% else %}
-      <span class="page-btn disabled" aria-disabled="true">&#8592;</span>
-    {% endif %}
-
-    {% for p in page_range %}
-      {% if p == paginator.ELLIPSIS %}
-        <span class="page-ellipsis">…</span>
-      {% elif p == page_obj.number %}
-        <span class="page-btn active" aria-current="page">{{ p }}</span>
+  <div class="kg-list-pager">
+    <nav class="pagination" aria-label="Halaman">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="page-btn" aria-label="Halaman sebelumnya"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg></a>
       {% else %}
-        <a href="?page={{ p }}" class="page-btn">{{ p }}</a>
+      <span class="page-btn disabled" aria-hidden="true"><svg class="ico"><use href="#i-kiri"/></svg></span>
       {% endif %}
-    {% endfor %}
-
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}" class="page-btn" aria-label="Halaman berikutnya">&#8594;</a>
-    {% else %}
-      <span class="page-btn disabled" aria-disabled="true">&#8594;</span>
-    {% endif %}
-  </nav>
+      {% for p in page_range %}
+        {% if p == paginator.ELLIPSIS %}<span class="page-ellipsis page-btn pg-num">…</span>
+        {% elif p == page_obj.number %}<span class="page-btn active" aria-current="page">{{ p }}</span>
+        {% else %}<a href="?page={{ p }}" class="page-btn pg-num">{{ p }}</a>{% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="page-btn" aria-label="Halaman berikutnya"><svg class="ico" aria-hidden="true"><use href="#i-kanan"/></svg></a>
+      {% else %}
+      <span class="page-btn disabled" aria-hidden="true"><svg class="ico"><use href="#i-kanan"/></svg></span>
+      {% endif %}
+    </nav>
+  </div>
   {% endif %}
-
   {% else %}
-  <div class="empty-state">
-    <p style="margin-bottom:8px">Belum ada kegiatan.</p>
+  <div class="card empty-state">
+    <strong>Belum ada kegiatan.</strong>
+    <p>Kegiatan resmi akan muncul setelah pengurus menyinkronkan data dari situs WMID.</p>
     {% if member.is_admin %}
-      <a href="{% url 'sync_kegiatan' %}" class="btn btn-primary btn-sm">Sinkronkan sekarang</a>
+    <a href="{% url 'sync_kegiatan' %}" class="btn btn-primary">Sinkronkan sekarang</a>
     {% endif %}
   </div>
   {% endif %}
-
 </div>
 {% endblock %}

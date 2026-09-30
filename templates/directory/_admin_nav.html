@@ -1,98 +1,70 @@
 <style>
-  .admin-nav-card {
-    background: var(--c-bg-card);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-card);
-    display: flex;
-    gap: 4px;
-    padding: 6px;
-    margin-bottom: 24px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    flex-wrap: nowrap;
-  }
-  .admin-nav-card::-webkit-scrollbar { display: none; }
+  /* Tab pengurus: menempel di bawah header, bisa digeser di ponsel */
+  .admin-tabs { border-bottom: 1px solid var(--line); margin-bottom: var(--s-6); }
+  .admin-tabs-in { display:flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .admin-tabs-in::-webkit-scrollbar { display: none; }
   .anav-link {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px;
-    border-radius: var(--radius-sm);
-    font-size: 13px; font-weight: 500;
-    color: var(--c-text-muted);
-    text-decoration: none;
-    white-space: nowrap;
-    transition: background .12s, color .12s;
-    flex-shrink: 0;
+    display:inline-flex; align-items:center; gap: 8px; min-height: 48px; padding: 0 14px; flex-shrink: 0;
+    font-size: var(--t-14); font-weight: 700; color: var(--ink-2); text-decoration: none; white-space: nowrap;
   }
-  .anav-link:hover { background: var(--c-bg); color: var(--c-text); }
-  .anav-link.is-active {
-    background: var(--c-primary-light);
-    color: var(--c-primary);
-    font-weight: 600;
-  }
-  .anav-badge {
-    background: var(--c-accent); color: #fff;
-    font-size: 10px; font-weight: 700; padding: 1px 6px;
-    border-radius: 99px; line-height: 1.6;
-  }
-
-  /* Filter form */
-  .filter-form { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:flex-end; }
-  .filter-form input[type="search"] { max-width:220px; flex:1; min-width:140px; }
-  .filter-form select { width:auto; flex-shrink:0; }
-
-  /* Pagination */
-  .pagination-wrap {
-    display:flex; align-items:center; justify-content:space-between;
-    margin-top:20px; flex-wrap:wrap; gap:12px;
-    padding-top:16px; border-top:1px solid var(--c-border);
-  }
-  .pagination-info { font-size:12px; color:var(--c-text-muted); }
-  .pagination { display:flex; gap:3px; flex-wrap:wrap; align-items:center; }
-  .page-btn {
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:32px; height:32px; padding:0 8px;
-    border-radius:var(--radius-sm); font-size:13px; font-weight:500;
-    text-decoration:none; border:1px solid var(--c-border);
-    background:var(--c-bg-card); color:var(--c-text-secondary);
-    transition:background .1s, color .1s, border-color .1s; font-family:var(--font);
-  }
-  .page-btn:hover { background:var(--c-bg); color:var(--c-text); border-color:#C4BEB8; }
-  .page-btn.is-active { background:var(--c-primary); color:#fff; border-color:var(--c-primary); }
-  .page-btn.is-disabled { opacity:.4; pointer-events:none; }
-  .page-btn.is-ellipsis { border:none; background:none; pointer-events:none; min-width:20px; padding:0; color:var(--c-text-muted); }
-
-  .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-
-  @media (max-width:640px) {
-    .filter-form { flex-direction:column; }
-    .filter-form input, .filter-form select, .filter-form .btn { width:100%; max-width:100%; }
-    .pagination-wrap { flex-direction:column; align-items:flex-start; }
+  .anav-link:first-child { padding-left: 2px; }
+  .anav-link:hover { color: var(--ink); }
+  .anav-link.is-active { color: var(--ink); box-shadow: inset 0 -3px 0 var(--primary); }
+  @media (max-width: 720px) {
+    .admin-tabs { margin: calc(-1 * var(--s-4)) calc(-1 * var(--s-4)) var(--s-4); background: var(--surface); }
+    .admin-tabs-in { padding-inline: var(--s-2); }
   }
 </style>
 
 <script>
+// Pencarian di halaman pengurus: kirim otomatis setelah berhenti mengetik.
 function adminSearch(form, delay) {
   clearTimeout(form._t);
   form._t = setTimeout(function() { form.submit(); }, delay || 450);
 }
+// Pilihan saringan: di desktop langsung terkirim saat diganti.
+// Di ponsel, pilihan dikumpulkan di lembar bawah lalu dikirim dengan tombol "Tampilkan hasil".
+function adminFilterChange(sel) {
+  if (window.matchMedia('(max-width: 720px)').matches) return;
+  sel.form.submit();
+}
 document.addEventListener('DOMContentLoaded', function() {
-  var q = document.querySelector('input[name="q"]');
+  var q = document.querySelector('.filter-form input[name="q"]');
   if (q && q.value) {
     q.focus();
     var v = q.value;
     q.value = '';
     q.value = v;
   }
+  document.querySelectorAll('.filter-form').forEach(function(form) {
+    var openBtn = form.querySelector('.filter-toggle');
+    var closeBtn = form.querySelector('.filter-close');
+    var scrim = document.getElementById('filter-scrim');
+    if (!openBtn) return;
+    function set(open) {
+      form.classList.toggle('is-sheet-open', open);
+      openBtn.setAttribute('aria-expanded', String(open));
+      if (scrim) scrim.hidden = !open;
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) { var f = form.querySelector('.filter-field select'); if (f) f.focus(); }
+      else openBtn.focus();
+    }
+    openBtn.addEventListener('click', function() { set(true); });
+    if (closeBtn) closeBtn.addEventListener('click', function() { set(false); });
+    if (scrim) scrim.addEventListener('click', function() { set(false); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && form.classList.contains('is-sheet-open')) set(false); });
+  });
 });
 </script>
 
-<nav class="admin-nav-card" aria-label="Navigasi admin">
-  <a href="{% url 'admin_dashboard' %}" class="anav-link {% if active_admin == 'dashboard' %}is-active{% endif %}">Ringkasan</a>
-  <a href="{% url 'admin_anggota' %}" class="anav-link {% if active_admin == 'anggota' %}is-active{% endif %}">Anggota</a>
-  <a href="{% url 'admin_komunitas' %}" class="anav-link {% if active_admin == 'komunitas' %}is-active{% endif %}">Komunitas</a>
-  <a href="{% url 'admin_kegiatan_data' %}" class="anav-link {% if active_admin == 'kegiatan' %}is-active{% endif %}">Kegiatan</a>
-  <a href="{% url 'admin_verifikasi' %}" class="anav-link {% if active_admin == 'verifikasi' %}is-active{% endif %}">
-    Verifikasi Data{% if pending_count %}&nbsp;<span class="anav-badge">{{ pending_count }}</span>{% endif %}
-  </a>
+<nav class="admin-tabs" aria-label="Menu pengurus">
+  <div class="admin-tabs-in">
+    <a href="{% url 'admin_dashboard' %}" class="anav-link {% if active_admin == 'dashboard' %}is-active{% endif %}" {% if active_admin == 'dashboard' %}aria-current="page"{% endif %}>Ringkasan</a>
+    <a href="{% url 'admin_anggota' %}" class="anav-link {% if active_admin == 'anggota' %}is-active{% endif %}" {% if active_admin == 'anggota' %}aria-current="page"{% endif %}>Anggota</a>
+    <a href="{% url 'admin_komunitas' %}" class="anav-link {% if active_admin == 'komunitas' %}is-active{% endif %}" {% if active_admin == 'komunitas' %}aria-current="page"{% endif %}>Komunitas</a>
+    <a href="{% url 'admin_kegiatan_data' %}" class="anav-link {% if active_admin == 'kegiatan' %}is-active{% endif %}" {% if active_admin == 'kegiatan' %}aria-current="page"{% endif %}>Kegiatan</a>
+    <a href="{% url 'admin_verifikasi' %}" class="anav-link {% if active_admin == 'verifikasi' %}is-active{% endif %}" {% if active_admin == 'verifikasi' %}aria-current="page"{% endif %}>
+      Verifikasi{% if pending_count %} <span class="count-pill" aria-label="{{ pending_count }} menunggu">{{ pending_count }}</span>{% endif %}
+    </a>
+  </div>
 </nav>

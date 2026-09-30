@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup Profil Anggota</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="serambi.css">
+<style>
+/* Profil: identitas di atas, lalu dua kolom (riwayat = kolom utama, sisanya di samping). Satu kolom di ponsel. */
+.demo-note { background: var(--accent); color: #15282A; font-size: var(--t-13); font-weight: 600; text-align:center; padding: 6px 16px; }
+.id-card { display:grid; grid-template-columns: auto 1fr auto; gap: var(--s-5); align-items: center; }
+.id-name { font-size: var(--t-28); font-weight: 800; letter-spacing: -0.02em; }
+.id-line { display:flex; flex-wrap:wrap; gap: 6px 16px; align-items:center; margin-top: 6px; }
+.id-line .meta { display:inline-flex; align-items:center; gap:6px; }
+.id-line svg { width:16px; height:16px; }
+.badge-admin { font-size: var(--t-12); font-weight: 800; letter-spacing:.04em; color: var(--primary); border:1.5px solid var(--primary); border-radius: var(--r-control); padding: 1px 7px; }
+.id-actions { display:flex; gap: var(--s-2); flex-wrap: wrap; justify-content:flex-end; }
+
+.nudge { display:flex; gap: var(--s-4); align-items:center; flex-wrap:wrap; padding: var(--s-4) var(--s-5); border-radius: var(--r-card); background: var(--primary-soft); }
+.nudge p { flex: 1 1 260px; font-size: var(--t-14); color: var(--ink); }
+.nudge-links { display:flex; gap: var(--s-2); flex-wrap:wrap; }
+.nudge-links a { display:inline-flex; align-items:center; gap:6px; min-height: 36px; padding: 0 12px; border-radius: var(--r-control); background: var(--surface); font-size: var(--t-13); font-weight: 700; text-decoration:none; }
+.nudge-links svg { width:16px; height:16px; }
+
+.cols { display:grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: var(--s-6); align-items:start; margin-top: var(--s-6); }
+.stack { display:grid; gap: var(--s-6); min-width:0; }
+
+/* Riwayat kegiatan */
+.rw-summary { display:flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-3); }
+.rw-list { list-style:none; margin: var(--s-4) 0 0; padding:0; }
+.rw { display:grid; grid-template-columns: 64px minmax(0,1fr) auto; gap: var(--s-4); padding-block: var(--s-4); border-top: 1px solid var(--line); align-items:start; }
+.rw-date { font-size: var(--t-13); color: var(--muted); font-weight: 600; line-height: 1.3; }
+.rw-date b { display:block; font-size: var(--t-16); color: var(--ink); }
+.rw-title { font-weight: 700; }
+.rw-sub { display:flex; flex-wrap:wrap; gap: 6px 12px; align-items:center; margin-top: 6px; }
+.rw-wait { display:flex; align-items:center; gap: var(--s-2); flex-wrap: wrap; margin-top: 8px; }
+.rw-wait form { display:inline; }
+.link-btn { background:none; border:0; padding: 0 4px; min-height: 36px; font: inherit; font-size: var(--t-13); font-weight: 700; color: var(--primary); cursor:pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Samping */
+.side-sect + .side-sect { border-top: 1px solid var(--line); margin-top: var(--s-5); padding-top: var(--s-5); }
+.kv { display:grid; gap: 4px; }
+.kv dt { font-size: var(--t-13); color: var(--muted); font-weight: 600; }
+.kv dd { margin: 0 0 var(--s-3); }
+.tags { display:flex; flex-wrap:wrap; gap: 6px; }
+.kom-list { list-style:none; padding:0; margin: var(--s-3) 0 0; display:grid; gap: 2px; }
+.kom-list a { display:flex; align-items:center; gap: var(--s-3); min-height: var(--tap); padding: 4px 8px; margin-inline: -8px; border-radius: var(--r-control); color: var(--ink); text-decoration:none; font-weight:600; font-size: var(--t-14); }
+.kom-list a:hover { background: var(--subtle); }
+.kom-logo { width: 32px; height: 32px; border-radius: var(--r-control); background: var(--subtle); display:grid; place-items:center; font-weight:800; font-size: var(--t-13); color: var(--ink-2); flex-shrink:0; }
+.stats { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--s-4) var(--s-3); margin-top: var(--s-3); }
+.stat b { display:block; font-size: var(--t-22); font-weight: 800; font-variant-numeric: tabular-nums; }
+.stat span { font-size: var(--t-13); color: var(--muted); }
+.proj { width:100%; border-collapse:collapse; font-size: var(--t-14); margin-top: var(--s-3); }
+.proj td { padding: 6px 0; border-top: 1px solid var(--line); }
+.proj td:last-child { text-align:right; font-variant-numeric: tabular-nums; font-weight:600; }
+
+@media (max-width: 960px) { .cols { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 720px) {
+  .id-card { grid-template-columns: auto 1fr; gap: var(--s-4); }
+  .av-lg { width: 56px; height: 56px; font-size: var(--t-18); }
+  .id-name { font-size: var(--t-22); }
+  .id-actions { grid-column: 1 / -1; justify-content: stretch; }
+  .id-actions .btn { flex: 1 1 0; }
+  .rw { grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "date status" "body body"; gap: 2px var(--s-3); }
+  .rw > div:nth-child(2) { grid-area: body; }
+  .rw-date { grid-area: date; align-self:center; } .rw-date b { display:inline; font-size: var(--t-13); color: var(--muted); }
+  .rw-status { grid-area: status; }
+  .rw-status .cap { width: 28px; height: 28px; outline-offset: -5px; }
+  .page { padding-top: var(--s-4); }
+  .cols { margin-top: var(--s-4); gap: var(--s-4); }
+  .stack { gap: var(--s-4); }
+}
+</style>
+</head>
+<body class="has-bottomnav">
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<defs><style>.ic{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}.tn{fill:var(--primary-soft);stroke:none}</style></defs>
+<symbol id="i-profil" viewBox="0 0 24 24"><circle class="tn" cx="12" cy="8" r="4"/><circle class="ic" cx="12" cy="8" r="4"/><path class="ic" d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></symbol>
+<symbol id="i-komunitas" viewBox="0 0 24 24"><circle class="tn" cx="9" cy="9" r="3.2"/><circle class="ic" cx="9" cy="9" r="3.2"/><circle class="ic" cx="16.5" cy="10" r="2.5"/><path class="ic" d="M3 19.5c.9-3 3.1-4.6 6-4.6s5.1 1.6 6 4.6M15 15.2c.5-.1 1-.2 1.5-.2 2.3 0 4 1.3 4.6 3.8"/></symbol>
+<symbol id="i-kegiatan" viewBox="0 0 24 24"><rect class="tn" x="4" y="8.5" width="16" height="4"/><rect class="ic" x="4" y="5" width="16" height="15" rx="2"/><path class="ic" d="M4 9.5h16M8.5 3v4M15.5 3v4"/></symbol>
+<symbol id="i-pengurus" viewBox="0 0 24 24"><rect class="tn" x="6" y="4" width="12" height="4" rx="1"/><rect class="ic" x="5" y="5" width="14" height="16" rx="2"/><path class="ic" d="M9 3.5h6v3H9zM8.5 12.5l2 2 4-4M8.5 17.5h7"/></symbol>
+<symbol id="i-cari" viewBox="0 0 24 24"><circle class="ic" cx="11" cy="11" r="6.5"/><path class="ic" d="M16 16l4.5 4.5"/></symbol>
+<symbol id="i-saring" viewBox="0 0 24 24"><path class="ic" d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle class="ic" cx="16" cy="7" r="2"/><circle class="ic" cx="10" cy="17" r="2"/></symbol>
+<symbol id="i-cek" viewBox="0 0 24 24"><path class="ic" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-jam" viewBox="0 0 24 24"><circle class="ic" cx="12" cy="12" r="8"/><path class="ic" d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path class="ic" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-tambah" viewBox="0 0 24 24"><path class="ic" d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-luar" viewBox="0 0 24 24"><path class="ic" d="M14 4h6v6M20 4l-8.5 8.5M18 14v4.5A1.5 1.5 0 0116.5 20h-11A1.5 1.5 0 014 18.5v-11A1.5 1.5 0 015.5 6H10"/></symbol>
+<symbol id="i-lokasi" viewBox="0 0 24 24"><path class="ic" d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle class="ic" cx="12" cy="10" r="2.3"/></symbol>
+<symbol id="i-surat" viewBox="0 0 24 24"><rect class="ic" x="3.5" y="5.5" width="17" height="13" rx="2"/><path class="ic" d="M4 7l8 6 8-6"/></symbol>
+<symbol id="i-telepon" viewBox="0 0 24 24"><rect class="ic" x="7" y="3" width="10" height="18" rx="2.2"/><path class="ic" d="M10.5 17.5h3"/></symbol>
+<symbol id="i-sinkron" viewBox="0 0 24 24"><path class="ic" d="M19 12a7 7 0 01-12.2 4.7M5 12a7 7 0 0112.2-4.7M17.5 3.5v4h-4M6.5 20.5v-4h4"/></symbol>
+<symbol id="i-ubah" viewBox="0 0 24 24"><path class="ic" d="M14.5 5.5l4 4M4 20l1-4.5L15.5 5a2 2 0 012.9 0l.6.6a2 2 0 010 2.9L8.5 19 4 20z"/></symbol>
+<symbol id="i-unduh" viewBox="0 0 24 24"><path class="ic" d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></symbol>
+<symbol id="i-kanan" viewBox="0 0 24 24"><path class="ic" d="M9.5 6l6 6-6 6"/></symbol>
+<symbol id="i-bawah" viewBox="0 0 24 24"><path class="ic" d="M6 9.5l6 6 6-6"/></symbol>
+<symbol id="i-kiri" viewBox="0 0 24 24"><path class="ic" d="M14.5 6l-6 6 6 6"/></symbol>
+<symbol id="i-wiki" viewBox="0 0 24 24"><circle class="ic" cx="12" cy="12" r="8.5"/><path class="ic" d="M3.5 12h17M12 3.5c2.3 2.4 3.4 5.2 3.4 8.5s-1.1 6.1-3.4 8.5c-2.3-2.4-3.4-5.2-3.4-8.5S9.7 5.9 12 3.5z"/></symbol>
+<symbol id="r-pelatih" viewBox="0 0 24 24"><rect class="tn" x="4" y="4.5" width="16" height="10"/><rect class="ic" x="3.5" y="4" width="17" height="11" rx="1.5"/><path class="ic" d="M8 20l4-5 4 5M7.5 8.5h6M7.5 11h4"/></symbol>
+<symbol id="r-juri" viewBox="0 0 24 24"><path class="ic" d="M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a2.5 2.5 0 005 0L5 7zM19 7l-2.5 6a2.5 2.5 0 005 0L19 7z"/></symbol>
+<symbol id="r-panitia" viewBox="0 0 24 24"><rect class="ic" x="5" y="4.5" width="14" height="16" rx="2"/><path class="ic" d="M9 9h6M9 12.5h6M9 16h3.5"/></symbol>
+<symbol id="r-narasumber" viewBox="0 0 24 24"><rect class="tn" x="9" y="4" width="6" height="10" rx="3"/><rect class="ic" x="9" y="3.5" width="6" height="11" rx="3"/><path class="ic" d="M6 11.5a6 6 0 0012 0M12 17.5V21"/></symbol>
+<symbol id="r-pj" viewBox="0 0 24 24"><path class="tn" d="M6 4.5h11l-2.5 4 2.5 4H6z"/><path class="ic" d="M6 21V4.5h11l-2.5 4 2.5 4H6"/></symbol>
+<symbol id="r-peserta" viewBox="0 0 24 24"><circle class="ic" cx="12" cy="8.5" r="3.5"/><path class="ic" d="M5.5 20c1-3.3 3.5-5 6.5-5s5.5 1.7 6.5 5"/></symbol>
+<symbol id="r-lainnya" viewBox="0 0 24 24"><circle class="ic" cx="6" cy="12" r="1.3"/><circle class="ic" cx="12" cy="12" r="1.3"/><circle class="ic" cx="18" cy="12" r="1.3"/></symbol>
+</svg>
+
+<div class="demo-note">Mockup konsep. Semua nama, kegiatan, dan angka di halaman ini adalah data contoh.</div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#">Direktori Anggota<small>Wikimedia Indonesia</small></a>
+    <nav class="topnav" aria-label="Navigasi utama">
+      <a href="#" aria-current="page">Profil</a>
+      <a href="#">Komunitas</a>
+      <a href="#">Kegiatan</a>
+      <a href="#">Pengurus</a>
+    </nav>
+    <button class="acct" type="button" aria-haspopup="menu" aria-expanded="false" style="margin-left:var(--s-2)">
+      <span class="av" style="width:34px;height:34px;font-size:12px">AC</span><span class="acct-name">Anggota Contoh</span>
+      <svg width="16" height="16"><use href="#i-bawah"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="page page-read">
+  <section class="panel panel-pad" aria-labelledby="nama">
+    <div class="id-card">
+      <div class="av av-lg" aria-hidden="true">AC</div>
+      <div style="min-width:0">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <h1 id="nama" class="id-name">Anggota Contoh</h1>
+          <span class="badge-admin">ADMIN</span>
+        </div>
+        <div class="id-line">
+          <span class="avail is-aktif">Bisa diajak</span>
+          <span class="meta"><svg><use href="#i-wiki"/></svg>ContohWiki</span>
+          <span class="meta"><svg><use href="#i-lokasi"/></svg>Kota Contoh, Provinsi Contoh</span>
+        </div>
+      </div>
+      <div class="id-actions">
+        <a class="btn btn-secondary" href="#"><svg><use href="#i-ubah"/></svg>Ubah profil</a>
+        <a class="btn btn-secondary" href="#"><svg><use href="#i-sinkron"/></svg>Sinkronkan suntingan</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="nudge" style="margin-top:var(--s-4)" role="note">
+    <p><strong>Profilmu belum lengkap.</strong> Pengurus mencari pelatih, juri, dan narasumber dari profil. Lengkapi dua hal ini supaya kamu lebih mudah ditemukan.</p>
+    <div class="nudge-links">
+      <a href="#"><svg><use href="#i-tambah"/></svg>Tulis bio singkat</a>
+      <a href="#"><svg><use href="#i-tambah"/></svg>Tambah keahlian</a>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="stack">
+      <section class="panel panel-pad" aria-labelledby="h-riwayat">
+        <div class="sect-head">
+          <div>
+            <h2 id="h-riwayat">Riwayat kegiatan</h2>
+            <p class="meta">Kegiatan yang sudah diverifikasi pengurus tampil dengan cap hijau.</p>
+          </div>
+          <a class="btn btn-primary" href="#"><svg><use href="#i-tambah"/></svg>Catat kegiatan</a>
+        </div>
+
+        <ol class="rw-list">
+          <li class="rw">
+            <div class="rw-date"><b>Sep</b> 2026</div>
+            <div style="min-width:0">
+              <div class="rw-title">WikiLatih Dasar Wikidata (contoh)</div>
+              <div class="rw-sub">
+                <span class="chip"><svg><use href="#r-pelatih"/></svg>Pelatih</span>
+                <span class="meta">Daring</span>
+              </div>
+              <div class="rw-wait">
+                <span class="st st-wait"><svg><use href="#i-jam"/></svg>Menunggu verifikasi</span>
+                <form><button class="link-btn" type="button">Batalkan</button></form>
+              </div>
+            </div>
+            <div class="rw-status"></div>
+          </li>
+          <li class="rw">
+            <div class="rw-date"><b>Jul</b> 2026</div>
+            <div style="min-width:0">
+              <div class="rw-title">Lomba Menulis Artikel Wikipedia (contoh)</div>
+              <div class="rw-sub">
+                <span class="chip"><svg><use href="#r-juri"/></svg>Juri</span>
+                <span class="meta">Kota Contoh</span>
+              </div>
+            </div>
+            <div class="rw-status"><span class="cap" title="Terverifikasi"><svg><use href="#i-cek"/></svg><span class="sr-only">Terverifikasi</span></span></div>
+          </li>
+          <li class="rw">
+            <div class="rw-date"><b>Mei</b> 2026</div>
+            <div style="min-width:0">
+              <div class="rw-title">Kopdar Komunitas Contoh</div>
+              <div class="rw-sub">
+                <span class="chip"><svg><use href="#r-panitia"/></svg>Panitia</span>
+                <span class="meta">Kota Contoh</span>
+              </div>
+            </div>
+            <div class="rw-status"><span class="cap" title="Terverifikasi"><svg><use href="#i-cek"/></svg><span class="sr-only">Terverifikasi</span></span></div>
+          </li>
+          <li class="rw">
+            <div class="rw-date"><b>Feb</b> 2026</div>
+            <div style="min-width:0">
+              <div class="rw-title">WikiLatih Foto untuk Commons (contoh)</div>
+              <div class="rw-sub">
+                <span class="chip"><svg><use href="#r-peserta"/></svg>Peserta</span>
+                <span class="meta">Daring</span>
+              </div>
+            </div>
+            <div class="rw-status"><span class="cap" title="Terverifikasi"><svg><use href="#i-cek"/></svg><span class="sr-only">Terverifikasi</span></span></div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="panel panel-pad" aria-labelledby="h-kontrib">
+        <div class="sect-head">
+          <div>
+            <h2 id="h-kontrib">Kontribusi wiki</h2>
+            <p class="meta">Diambil dari akun Wikimedia ContohWiki. Terakhir disinkronkan 28 Sep 2026.</p>
+          </div>
+        </div>
+        <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+          <div class="stat"><b>240</b><span>Suntingan tersimpan</span></div>
+          <div class="stat"><b>96</b><span>Halaman berbeda</span></div>
+          <div class="stat"><b>4</b><span>Proyek wiki</span></div>
+          <div class="stat"><b style="color:var(--success)">+18.402</b><span>Selisih byte</span></div>
+        </div>
+        <table class="proj" aria-label="Suntingan per proyek">
+          <tr><td>id.wikipedia.org</td><td>150</td></tr>
+          <tr><td>www.wikidata.org</td><td>61</td></tr>
+          <tr><td>commons.wikimedia.org</td><td>24</td></tr>
+          <tr><td>jv.wikipedia.org</td><td>5</td></tr>
+        </table>
+        <details style="margin-top:var(--s-4)">
+          <summary style="cursor:pointer;font-weight:700;color:var(--primary);min-height:var(--tap);display:flex;align-items:center">10 suntingan terbaru</summary>
+          <table class="proj" aria-label="Suntingan terbaru">
+            <tr><td><a href="#">Contoh Artikel Satu</a><div class="meta">27 Sep 2026</div></td><td style="color:var(--success)">+1.204</td></tr>
+            <tr><td><a href="#">Contoh Artikel Dua</a><div class="meta">25 Sep 2026</div></td><td style="color:var(--danger)">−86</td></tr>
+          </table>
+        </details>
+      </section>
+    </div>
+
+    <aside class="stack" aria-label="Info anggota">
+      <section class="panel panel-pad">
+        <div class="side-sect">
+          <h2>Tentang</h2>
+          <dl class="kv" style="margin-top:var(--s-3)">
+            <dt>Keahlian</dt>
+            <dd><div class="tags"><span class="chip">Wikidata</span><span class="chip">Fotografi</span><span class="chip">Pelatihan daring</span></div></dd>
+            <dt>Email</dt><dd>email@example.com</dd>
+            <dt>Nomor HP/WA</dt><dd class="num">+62 8xx xxxx xxxx</dd>
+            <dt>Anggota WMID sejak</dt><dd>Mar 2021</dd>
+          </dl>
+        </div>
+        <div class="side-sect">
+          <div class="sect-head"><h2>Komunitas</h2><a href="#" class="btn btn-quiet" style="min-height:36px;padding:0 10px">Gabung</a></div>
+          <ul class="kom-list">
+            <li><a href="#"><span class="kom-logo">KC</span>Komunitas Contoh</a></li>
+            <li><a href="#"><span class="kom-logo">KB</span>Komunitas Bahasa Contoh</a></li>
+          </ul>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<nav class="bottomnav" aria-label="Navigasi utama">
+  <a href="#" aria-current="page"><svg><use href="#i-profil"/></svg>Profil</a>
+  <a href="#"><svg><use href="#i-komunitas"/></svg>Komunitas</a>
+  <a href="#"><svg><use href="#i-kegiatan"/></svg>Kegiatan</a>
+  <a href="#"><svg><use href="#i-pengurus"/></svg>Pengurus</a>
+</nav>
+</body>
+</html>

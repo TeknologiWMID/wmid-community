@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import datetime
 
@@ -16,6 +17,10 @@ from directory.wikimedia import (
 from .utils import get_session_member, store_sync_result
 
 
+logger = logging.getLogger(__name__)
+
+_OAUTH_PUTUS = 'Proses menghubungkan akun terputus. Mulai lagi dari tombol Hubungkan akun Wikimedia di profil.'
+
 def register(request):
     if get_session_member(request):
         return redirect('profile')
@@ -30,19 +35,19 @@ def register(request):
         has_error = False
 
         if not display_name:
-            messages.error(request, 'Nama lengkap wajib diisi.')
+            messages.error(request, 'Nama lengkap belum diisi.')
             has_error = True
         if not email:
-            messages.error(request, 'Email wajib diisi.')
+            messages.error(request, 'Email belum diisi.')
             has_error = True
         if not password:
-            messages.error(request, 'Kata sandi wajib diisi.')
+            messages.error(request, 'Kata sandi belum diisi.')
             has_error = True
         elif len(password) < 8:
-            messages.error(request, 'Kata sandi minimal 8 karakter.')
+            messages.error(request, 'Kata sandi terlalu pendek. Pakai minimal 8 karakter.')
             has_error = True
         if password and password != password2:
-            messages.error(request, 'Konfirmasi kata sandi tidak cocok.')
+            messages.error(request, 'Kedua kata sandi tidak sama. Ketik ulang dengan teliti.')
             has_error = True
         shadow = None
         if email:
@@ -51,7 +56,7 @@ def register(request):
                 if existing.auth_method == Member.AUTH_IMPORT:
                     shadow = existing
                 else:
-                    messages.error(request, 'Email sudah terdaftar. Silakan masuk.')
+                    messages.error(request, 'Email ini sudah punya akun. Masuk dengan email tersebut.')
                     has_error = True
             except Member.DoesNotExist:
                 pass
@@ -68,9 +73,9 @@ def register(request):
             riwayat_count = shadow.riwayat_kegiatan.filter(
                 status='terverifikasi'
             ).count()
-            msg = 'Akun berhasil dibuat. Selamat datang!'
+            msg = 'Akunmu sudah jadi. Selamat datang di Direktori WMID.'
             if riwayat_count:
-                msg += f' {riwayat_count} riwayat kegiatan sebelumnya ditemukan dan diklaim otomatis.'
+                msg += f' {riwayat_count} riwayat kegiatanmu yang lama sudah tersambung ke akun ini.'
             messages.success(request, msg)
             return redirect('profile')
 
@@ -82,7 +87,7 @@ def register(request):
             wiki_verified=False,
         )
         request.session['member_id'] = member.pk
-        messages.success(request, 'Akun berhasil dibuat. Selamat datang!')
+        messages.success(request, 'Akunmu sudah jadi. Selamat datang di Direktori WMID.')
         return redirect('profile')
 
     return render(request, 'directory/register.html', {})
@@ -113,7 +118,7 @@ def email_login(request):
         attempts = cache.get(cache_key, 0)
 
         if attempts >= _MAX_ATTEMPTS:
-            messages.error(request, 'Terlalu banyak percobaan login. Coba lagi dalam 1 menit.')
+            messages.error(request, 'Terlalu banyak percobaan masuk. Tunggu 1 menit, lalu coba lagi.')
             return render(request, 'directory/login.html', {})
 
         email = request.POST.get('email', '').strip().lower()
@@ -123,17 +128,17 @@ def email_login(request):
             member = Member.objects.get(email=email, auth_method=Member.AUTH_EMAIL)
         except Member.DoesNotExist:
             cache.set(cache_key, attempts + 1, _LOCKOUT_SECONDS)
-            messages.error(request, 'Email atau kata sandi salah.')
+            messages.error(request, 'Email atau kata sandi tidak cocok. Periksa lagi, lalu coba masuk.')
             return render(request, 'directory/login.html', {'email': email})
 
         if not check_password(password, member.password_hash):
             cache.set(cache_key, attempts + 1, _LOCKOUT_SECONDS)
-            messages.error(request, 'Email atau kata sandi salah.')
+            messages.error(request, 'Email atau kata sandi tidak cocok. Periksa lagi, lalu coba masuk.')
             return render(request, 'directory/login.html', {'email': email})
 
         cache.delete(cache_key)
         request.session['member_id'] = member.pk
-        messages.success(request, f'Selamat datang kembali, {member.display_name or email}!')
+        messages.success(request, f'Selamat datang kembali, {member.display_name or email}.')
         return redirect('profile')
 
     return render(request, 'directory/login.html', {})
@@ -142,7 +147,7 @@ def email_login(request):
 def oauth_login(request):
     member = get_session_member(request)
     if not member:
-        messages.info(request, 'Silakan masuk terlebih dahulu untuk menghubungkan akun Wikimedia.')
+        messages.info(request, 'Masuk dulu, lalu hubungkan akun Wikimedia dari halaman profil.')
         return redirect('email_login')
 
     state = secrets.token_urlsafe(32)
@@ -157,7 +162,8 @@ def oauth_login(request):
 def oauth_callback(request):
     error = request.GET.get('error')
     if error:
-        messages.error(request, f'Wikimedia menolak otorisasi: {request.GET.get("error_description", error)}')
+        logger.warning('OAuth ditolak: %s', request.GET.get('error_description', error))
+        messages.error(request, 'Wikimedia tidak memberi izin, jadi akun belum terhubung. Coba hubungkan lagi dari profil.')
         return redirect('profile')
 
     code = request.GET.get('code')
@@ -165,28 +171,33 @@ def oauth_callback(request):
     saved_state = request.session.pop('oauth_state', None) or request.COOKIES.get('oauth_state')
 
     if not code:
-        messages.error(request, 'Parameter "code" tidak ditemukan dalam callback.')
+        logger.warning('OAuth callback tanpa parameter code')
+        messages.error(request, _OAUTH_PUTUS)
         return redirect('profile')
 
     if state != saved_state:
-        messages.error(request, 'Validasi state gagal (kemungkinan serangan CSRF). Coba lagi.')
+        logger.warning('OAuth state tidak cocok')
+        messages.error(request, _OAUTH_PUTUS)
         return redirect('profile')
 
     linking_member_id = request.session.pop('linking_member_id', None)
     if not linking_member_id:
-        messages.error(request, 'Sesi tidak valid. Silakan coba hubungkan akun lagi dari halaman profil.')
+        logger.warning('OAuth callback tanpa linking_member_id di sesi')
+        messages.error(request, _OAUTH_PUTUS)
         return redirect('profile')
 
     try:
         token_data = exchange_code_for_token(code)
     except Exception as e:
-        messages.error(request, f'Gagal menukar token: {e}')
+        logger.warning('OAuth gagal menukar token: %s', e)
+        messages.error(request, 'Wikimedia sedang tidak bisa dihubungi. Coba lagi beberapa menit lagi.')
         return redirect('profile')
 
     try:
         profile = fetch_profile(token_data['access_token'])
     except Exception as e:
-        messages.error(request, f'Gagal mengambil profil: {e}')
+        logger.warning('OAuth gagal mengambil profil: %s', e)
+        messages.error(request, 'Wikimedia sedang tidak bisa dihubungi. Coba lagi beberapa menit lagi.')
         return redirect('profile')
 
     return _handle_account_link(request, profile, linking_member_id)
@@ -196,14 +207,15 @@ def _handle_account_link(request, profile, linking_member_id):
     try:
         member = Member.objects.get(pk=linking_member_id)
     except Member.DoesNotExist:
-        messages.error(request, 'Sesi link tidak valid.')
+        logger.warning('Sesi penautan akun tidak valid')
+        messages.error(request, _OAUTH_PUTUS)
         return redirect('index')
 
     wiki_userid = str(profile.get('sub', ''))
     wiki_username = profile.get('username', '')
 
     if Member.objects.filter(wikimedia_userid=wiki_userid).exclude(pk=linking_member_id).exists():
-        messages.error(request, f'Akun Wikimedia "{wiki_username}" sudah terhubung ke akun lain.')
+        messages.error(request, f'Akun Wikimedia {wiki_username} sudah dipakai oleh anggota lain di direktori ini. Kalau itu akunmu, hubungi pengurus.')
         return redirect('profile')
 
     registered_at = None
@@ -230,14 +242,15 @@ def _handle_account_link(request, profile, linking_member_id):
     try:
         store_sync_result(request, sync_contributions(member))
     except Exception as e:
-        messages.warning(request, f'Akun Wikimedia terhubung, tapi sync kontribusi gagal: {e}')
+        logger.warning('Sinkronisasi setelah OAuth gagal: %s', e)
+        messages.warning(request, 'Akun Wikimedia sudah terhubung, tapi suntinganmu belum bisa ditarik. Coba Sinkronkan suntingan dari profil.')
 
-    messages.success(request, f'Akun Wikimedia "{wiki_username}" berhasil dihubungkan.')
+    messages.success(request, f'Akun Wikimedia {wiki_username} sudah terhubung.')
     request.session['member_id'] = member.pk
     return redirect('profile')
 
 
 def logout(request):
     request.session.flush()
-    messages.success(request, 'Anda telah logout.')
+    messages.success(request, 'Kamu sudah keluar dari akun.')
     return redirect('index')

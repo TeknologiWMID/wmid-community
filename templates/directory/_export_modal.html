@@ -1,0 +1,38 @@
+{# Modal ekspor data. Variabel: export_title. Perilaku ada di script halaman masing-masing (ID elemen harus tetap). #}
+<div id="modal-ekspor" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="ekspor-title">
+  <div class="sheet-modal-box">
+    <div class="sheet-modal-head">
+      <div>
+        <div class="sheet-modal-title" id="ekspor-title">{{ export_title }}</div>
+        <div id="ekspor-subtitle" class="meta">Memuat data…</div>
+      </div>
+      <button type="button" id="btn-modal-close" class="icon-btn" aria-label="Tutup"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="sheet-modal-body">
+      <p class="form-label" style="margin-bottom:var(--s-3)">Pilih kolom</p>
+      <div id="col-checks" class="export-cols"></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--s-3);flex-wrap:wrap;margin:var(--s-6) 0 var(--s-2)">
+        <p class="form-label">Pratinjau 8 baris pertama</p>
+        <span id="ekspor-total" class="meta"></span>
+      </div>
+      <div class="tbl-wrap export-preview">
+        <table id="preview-table">
+          <thead id="preview-thead"></thead>
+          <tbody id="preview-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="sheet-modal-foot">
+      <span id="ekspor-loading" class="meta" style="display:none">Memuat data…</span>
+      <span style="flex:1"></span>
+      <button type="button" id="btn-dl-csv" class="btn btn-secondary" disabled><svg class="ico" aria-hidden="true"><use href="#i-unduh"/></svg>Unduh CSV</button>
+      <button type="button" id="btn-dl-xlsx" class="btn btn-primary" disabled><svg class="ico" aria-hidden="true"><use href="#i-unduh"/></svg>Unduh Excel</button>
+    </div>
+  </div>
+</div>
+<style>
+  .export-cols { display:grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px var(--s-4); }
+  .export-cols label { min-height: 36px; }
+  .export-preview { border: 1px solid var(--line); border-radius: var(--r-control); max-height: 320px; }
+  .export-preview table { font-size: var(--t-13); }
+</style>

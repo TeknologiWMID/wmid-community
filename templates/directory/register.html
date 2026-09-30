@@ -1,104 +1,56 @@
 {% extends "directory/base.html" %}
-{% block title %}Daftar — Direktori Anggota WMID{% endblock %}
-
-{% block head %}
-<style>
-  .auth-shell {
-    min-height: calc(100vh - 56px);
-    display: flex; align-items: flex-start; justify-content: center;
-    padding: 60px 20px 80px;
-  }
-  .auth-box { width: 100%; max-width: 400px; }
-  .auth-head { margin-bottom: 24px; }
-  .auth-head h1 { font-size: 22px; font-weight: 700; letter-spacing: -.03em; color: var(--c-text); }
-  .auth-panel {
-    background: var(--c-bg-card); border: 1px solid var(--c-border);
-    border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: 28px 28px 24px;
-  }
-  .auth-panel .form-field { margin-bottom: 14px; }
-  .pw-wrap { position: relative; }
-  .pw-wrap input { padding-right: 40px; }
-  .pw-toggle {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; padding: 4px; cursor: pointer;
-    color: var(--c-text-muted); display: flex; align-items: center; border-radius: 4px;
-  }
-  .pw-toggle:hover { color: var(--c-text); }
-  .auth-footer { text-align: center; margin-top: 16px; font-size: 13px; color: var(--c-text-muted); }
-  .auth-footer a { color: var(--c-primary); font-weight: 500; }
-</style>
-{% endblock %}
+{% block title %}Daftar · Direktori Anggota WMID{% endblock %}
+{% block head %}{% include "directory/_auth_style.html" %}{% endblock %}
 
 {% block content %}
 <div class="auth-shell">
   <div class="auth-box">
-
     <div class="auth-head">
-      <h1>Buat akun</h1>
+      <h1>Daftar sebagai anggota</h1>
+      <p>Setelah mendaftar, kamu bisa mencatat kegiatan dan bergabung dengan komunitas.</p>
     </div>
 
     <div class="auth-panel">
+      <div class="note" style="margin-bottom:var(--s-5)">
+        <svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>
+        <p>Pernah ikut kegiatan WMID? Pakai email yang sama dengan saat itu supaya riwayatmu tersambung.</p>
+      </div>
       <form method="post" action="{% url 'register' %}">
         {% csrf_token %}
-
         <div class="form-field">
           <label class="form-label" for="display_name">Nama lengkap</label>
-          <input type="text" id="display_name" name="display_name"
-                 value="{{ display_name|default:'' }}"
-                 placeholder="Nama kamu"
+          <input type="text" id="display_name" name="display_name" value="{{ display_name|default:'' }}"
                  maxlength="200" autocomplete="name" required autofocus>
         </div>
-
         <div class="form-field">
-          <label class="form-label" for="email">Surel</label>
-          <input type="email" id="email" name="email"
-                 value="{{ email|default:'' }}"
-                 placeholder="kamu@example.com"
-                 autocomplete="email" required>
+          <label class="form-label" for="email">Email</label>
+          <input type="email" id="email" name="email" value="{{ email|default:'' }}"
+                 placeholder="email@example.com" autocomplete="email" required>
         </div>
-
         <div class="form-field">
           <label class="form-label" for="password">Kata sandi</label>
           <div class="pw-wrap">
-            <input type="password" id="password" name="password"
-                   placeholder="Minimal 8 karakter"
-                   autocomplete="new-password" required>
-            <button type="button" class="pw-toggle" data-pw="password" aria-label="Tampilkan kata sandi">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <input type="password" id="password" name="password" autocomplete="new-password" aria-describedby="pw-hint" required>
+            <button type="button" class="pw-toggle" data-pw="password" aria-label="Tampilkan kata sandi" aria-pressed="false">
+              <svg class="ico" aria-hidden="true"><use href="#i-mata"/></svg>
             </button>
           </div>
+          <p class="form-hint" id="pw-hint">Minimal 8 karakter.</p>
         </div>
-
-        <div class="form-field" style="margin-bottom:20px">
-          <label class="form-label" for="password2">Ulangi kata sandi</label>
+        <div class="form-field">
+          <label class="form-label" for="password2">Ketik ulang kata sandi</label>
           <div class="pw-wrap">
-            <input type="password" id="password2" name="password2"
-                   placeholder="Ketik ulang kata sandi"
-                   autocomplete="new-password" required>
-            <button type="button" class="pw-toggle" data-pw="password2" aria-label="Tampilkan kata sandi">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <input type="password" id="password2" name="password2" autocomplete="new-password" required>
+            <button type="button" class="pw-toggle" data-pw="password2" aria-label="Tampilkan kata sandi" aria-pressed="false">
+              <svg class="ico" aria-hidden="true"><use href="#i-mata"/></svg>
             </button>
           </div>
         </div>
-
-        <button type="submit" class="btn btn-primary" style="width:100%">Buat akun</button>
+        <button type="submit" class="btn btn-primary">Daftar</button>
       </form>
     </div>
 
     <p class="auth-footer">Sudah punya akun? <a href="{% url 'email_login' %}">Masuk</a></p>
-
   </div>
 </div>
-<script>
-document.querySelectorAll('[data-pw]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const inp = document.getElementById(btn.dataset.pw);
-    const show = inp.type === 'password';
-    inp.type = show ? 'text' : 'password';
-    btn.querySelector('svg').innerHTML = show
-      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
-      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-  });
-});
-</script>
 {% endblock %}

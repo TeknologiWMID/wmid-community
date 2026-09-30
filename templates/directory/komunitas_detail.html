@@ -1,145 +1,114 @@
 {% extends "directory/base.html" %}
-{% block title %}{{ komunitas.nama_komunitas }} — Komunitas{% endblock %}
+{% load directory_tags %}
+{% block title %}{{ komunitas.nama_komunitas }} · Direktori Anggota WMID{% endblock %}
 
 {% block head %}
 <style>
-  .detail-header { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
-  .detail-logo {
-    width: 72px; height: 72px; border-radius: 14px;
-    object-fit: contain; border: 1px solid var(--c-border);
-    background: var(--c-bg-subtle); padding: 6px; flex-shrink: 0;
-  }
-  .detail-logo-fallback {
-    width: 72px; height: 72px; border-radius: 14px;
-    background: var(--c-primary); color: #fff;
-    font-size: 24px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .member-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 0; border-bottom: 1px solid var(--c-border);
-  }
-  .member-row:last-child { border-bottom: none; }
-  .member-av {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--c-primary); color: #fff;
-    font-size: 12px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  .page-kom { max-width: 1040px; }
+  .kom-head { display:grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+  .kom-head .logo-box { width: 80px; height: 80px; font-size: var(--t-22); }
+  .kom-head h1 { font-size: var(--t-28); }
+  .kom-line { display:flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin-top: var(--s-2); font-size: var(--t-14); color: var(--ink-2); }
+  .kom-line b { font-variant-numeric: tabular-nums; color: var(--ink); }
+  .kom-desc { margin-top: var(--s-3); color: var(--ink-2); max-width: 70ch; }
+  .kom-cols { display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--s-5); align-items: start; margin-top: var(--s-5); }
+  .kom-cols .card + .card { margin-top: 0; }
+  .member-list, .kg-list { list-style: none; margin: var(--s-3) 0 0; padding: 0; }
+  .member-row { display:flex; align-items:center; gap: var(--s-3); min-height: 52px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .member-list li:first-child .member-row { border-top: 0; }
+  .kg-row { display:grid; grid-template-columns: 56px minmax(0, 1fr); gap: var(--s-3); padding: var(--s-3) 0; border-top: 1px solid var(--line); }
+  .kg-list li:first-child .kg-row { border-top: 0; }
+  .kg-date { text-align: center; border-radius: var(--r-control); background: var(--subtle); padding: 6px 4px; line-height: 1.15; }
+  .kg-date b { display:block; font-size: var(--t-18); font-weight: 800; }
+  .kg-date span { font-size: var(--t-12); color: var(--muted); font-weight: 700; }
+  .kg-row a { font-weight: 700; }
+  @media (max-width: 860px) { .kom-cols { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); margin-top: var(--s-4); } }
+  @media (max-width: 720px) {
+    .kom-head { grid-template-columns: auto minmax(0, 1fr); gap: var(--s-4); }
+    .kom-head .logo-box { width: 56px; height: 56px; font-size: var(--t-18); }
+    .kom-head h1 { font-size: var(--t-22); }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-content">
+<div class="page-content page-kom">
+  <a href="{% url 'komunitas_list' %}" class="breadcrumb"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg>Semua komunitas</a>
 
-<a href="{% url 'komunitas_list' %}" class="breadcrumb">&larr; Komunitas</a>
-
-{# ── Header ── #}
-<div class="card" style="margin-bottom:20px">
-  <div class="detail-header">
-    {% if komunitas.logo %}
-      <img src="{{ komunitas.logo }}" alt="{{ komunitas.nama_komunitas }}" class="detail-logo">
-    {% else %}
-      <div class="detail-logo-fallback">{{ komunitas.nama_komunitas|first|upper }}</div>
-    {% endif %}
-    <div style="flex:1;min-width:180px">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-        <h1 class="page-title" style="font-size:20px">{{ komunitas.nama_komunitas }}</h1>
-        {% if komunitas.jenis_komunitas %}
-          <span class="jenis-badge jenis-{{ komunitas.jenis_komunitas }}">{{ komunitas.jenis_label }}</span>
+  <section class="card">
+    <div class="kom-head">
+      <span class="logo-box" aria-hidden="true">{% if komunitas.logo %}<img src="{{ komunitas.logo }}" alt="">{% else %}{{ komunitas.nama_komunitas|initials }}{% endif %}</span>
+      <div style="min-width:0">
+        <h1>{{ komunitas.nama_komunitas }}</h1>
+        <div class="kom-line">
+          {% if komunitas.jenis_komunitas %}<span class="chip"><svg class="ico" aria-hidden="true"><use href="#{{ komunitas.jenis_komunitas|jenis_icon }}"/></svg>{{ komunitas.jenis_label }}</span>{% endif %}
+          <span><b>{{ anggota_qs|length }}</b> anggota</span>
+          <span><b>{{ kegiatan_qs|length }}</b> kegiatan</span>
+          {% if is_member %}<span class="st st-ok"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg>Kamu anggota komunitas ini</span>{% endif %}
+        </div>
+        {% if komunitas.deskripsi %}<p class="kom-desc">{{ komunitas.deskripsi }}</p>{% endif %}
+        {% if komunitas.pranala_informasi %}
+        <a href="{{ komunitas.pranala_informasi }}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-top:var(--s-4)">Kunjungi halaman komunitas<svg class="ico" aria-hidden="true"><use href="#i-luar"/></svg></a>
         {% endif %}
       </div>
-      {% if komunitas.deskripsi %}
-        <p style="font-size:14px;color:var(--c-text-secondary);line-height:1.6;max-width:600px">{{ komunitas.deskripsi }}</p>
+    </div>
+  </section>
+
+  <div class="kom-cols">
+    <section class="card">
+      <h2>Anggota <span class="count">{{ anggota_qs|length }}</span></h2>
+      {% if anggota_qs %}
+      <ul class="member-list">
+        {% if komunitas.narahubung %}
+        <li>
+          <div class="member-row">
+            <span class="mini-av" aria-hidden="true">{{ komunitas.narahubung.display_label|initials }}</span>
+            <div style="min-width:0;flex:1"><div style="font-weight:700">{{ komunitas.narahubung.display_label }}</div></div>
+            <span class="chip chip-sm chip-soft">Narahubung</span>
+          </div>
+        </li>
+        {% endif %}
+        {% for ka in anggota_qs %}
+        {% if ka.member != komunitas.narahubung %}
+        <li>
+          <div class="member-row">
+            <span class="mini-av" aria-hidden="true">{{ ka.member.display_label|initials }}</span>
+            <div style="min-width:0;flex:1"><div style="font-weight:600">{{ ka.member.display_label }}</div></div>
+          </div>
+        </li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-inline" style="margin-top:var(--s-2)">Belum ada anggota yang terdaftar di komunitas ini.</p>
       {% endif %}
-      {% if komunitas.pranala_informasi %}
-      <div style="margin-top:12px">
-        <a href="{{ komunitas.pranala_informasi }}" target="_blank" rel="noopener"
-           style="font-size:13px;display:inline-flex;align-items:center;gap:5px">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          Halaman komunitas
-        </a>
-      </div>
+    </section>
+
+    <section class="card">
+      <h2>Kegiatan terkait <span class="count">{{ kegiatan_qs|length }}</span></h2>
+      {% if kegiatan_qs %}
+      <ul class="kg-list">
+        {% for kg in kegiatan_qs %}
+        <li>
+          <div class="kg-row">
+            <div class="kg-date" aria-hidden="true"><b>{{ kg.tanggal_mulai|date:"d" }}</b><span>{{ kg.tanggal_mulai|date:"M Y" }}</span></div>
+            <div style="min-width:0">
+              <a href="{% url 'kegiatan_detail' kg.kode %}">{{ kg.judul }}</a>
+              <div class="meta">
+                <span class="sr-only">{{ kg.tanggal_mulai|date:"d M Y" }}</span>
+                {% if kg.lokasi %}{{ kg.lokasi }}{% endif %}
+                {% if kg.lokasi and kg.tanggal_selesai and kg.tanggal_selesai.date != kg.tanggal_mulai.date %} · {% endif %}
+                {% if kg.tanggal_selesai and kg.tanggal_selesai.date != kg.tanggal_mulai.date %}sampai {{ kg.tanggal_selesai|date:"d M Y" }}{% endif %}
+              </div>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-inline" style="margin-top:var(--s-2)">Belum ada kegiatan yang tercatat untuk komunitas ini.</p>
       {% endif %}
-    </div>
+    </section>
   </div>
-</div>
-
-{# ── Statistik ringkas ── #}
-<div class="card" style="margin-bottom:20px">
-  <p class="section-label">Statistik</p>
-  <div style="display:flex;gap:24px;flex-wrap:wrap">
-    <div class="stat-card" style="flex:1;min-width:120px">
-      <div class="stat-number c-primary">{{ anggota_qs|length }}</div>
-      <div class="stat-label">Anggota terdaftar</div>
-    </div>
-    <div class="stat-card" style="flex:1;min-width:120px">
-      <div class="stat-number c-primary">{{ kegiatan_qs|length }}</div>
-      <div class="stat-label">Kegiatan tercatat</div>
-    </div>
-  </div>
-</div>
-
-{# ── Anggota ── #}
-<div class="card" style="margin-bottom:20px">
-  <p class="section-label">Anggota <span style="font-weight:400;color:var(--c-text-muted)">({{ anggota_qs|length }})</span></p>
-
-  {% if anggota_qs %}
-  <div>
-    {% if komunitas.narahubung %}
-    <div class="member-row">
-      <div class="member-av">{{ komunitas.narahubung.display_label|first|upper }}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px">
-          {{ komunitas.narahubung.display_label }}
-          <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--c-primary-light);color:var(--c-primary)">Narahubung</span>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-    {% for ka in anggota_qs %}
-    {% if ka.member != komunitas.narahubung %}
-    <div class="member-row">
-      <div class="member-av">{{ ka.member.display_label|first|upper }}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600">{{ ka.member.display_label }}</div>
-      </div>
-    </div>
-    {% endif %}
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="meta">Belum ada anggota.</p>
-  {% endif %}
-</div>
-
-{# ── Riwayat kegiatan ── #}
-<div class="card">
-  <p class="section-label">Kegiatan terkait <span style="font-weight:400;color:var(--c-text-muted)">({{ kegiatan_qs|length }})</span></p>
-
-  {% if kegiatan_qs %}
-  <div>
-    {% for kg in kegiatan_qs %}
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--c-border)">
-      <div style="flex-shrink:0;text-align:center;min-width:40px">
-        <div style="font-size:18px;font-weight:700;line-height:1;color:var(--c-primary)">{{ kg.tanggal_mulai|date:"d" }}</div>
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--c-text-muted)">{{ kg.tanggal_mulai|date:"M Y" }}</div>
-      </div>
-      <div style="flex:1;min-width:0">
-        <a href="{% url 'kegiatan_detail' kg.kode %}" style="font-size:13px;font-weight:600;color:var(--c-text)">{{ kg.judul }}</a>
-        <div style="font-size:11px;color:var(--c-text-muted);margin-top:3px">
-          {% if kg.lokasi %}{{ kg.lokasi }}{% endif %}
-          {% if kg.lokasi and kg.tanggal_selesai and kg.tanggal_selesai != kg.tanggal_mulai %} &middot; {% endif %}
-          {% if kg.tanggal_selesai and kg.tanggal_selesai.date != kg.tanggal_mulai.date %}s/d {{ kg.tanggal_selesai|date:"d M Y" }}{% endif %}
-        </div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="meta">Belum ada kegiatan tercatat untuk komunitas ini.</p>
-  {% endif %}
-</div>
-
 </div>
 {% endblock %}

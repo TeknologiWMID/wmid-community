@@ -1,180 +1,150 @@
 {% extends "directory/base.html" %}
-{% block title %}Edit {{ kegiatan.judul }} — Admin WMID{% endblock %}
+{% load directory_tags %}
+{% block title %}Ubah {{ kegiatan.judul }} · Pengurus WMID{% endblock %}
+{% block body_class %}density-meja{% endblock %}
 
 {% block head %}
 <style>
-  .detail-section-title {
-    font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--c-text-muted);margin-bottom:12px;padding-bottom:8px;
-    border-bottom:1px solid var(--c-border);
-  }
-  .detail-row {
-    display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--c-bg-subtle);
-    align-items:center;
-  }
-  .detail-row:last-child { border-bottom:none; }
-  .detail-key   { font-size:12px;color:var(--c-text-muted);width:150px;flex-shrink:0; }
-  .detail-muted { font-size:13px;color:var(--c-text-secondary);flex:1; }
-  .field-block  { display:flex;flex-direction:column;gap:4px; }
-  .field-block label { font-size:12px;color:var(--c-text-muted); }
-  .field-block input, .field-block select, .field-block textarea {
-    font-size:13px;padding:6px 8px;border:1px solid var(--c-border);border-radius:6px;
-    background:var(--c-bg-card);color:var(--c-text);width:100%;box-sizing:border-box;
-  }
-  .field-block input:focus, .field-block select:focus, .field-block textarea:focus {
-    outline:none;border-color:var(--c-primary);
-  }
-  .field-block textarea { resize:vertical;min-height:90px; }
-  .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
-  .btn-hapus-row {
-    font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--c-danger);
-    background:transparent;color:var(--c-danger);cursor:pointer;white-space:nowrap;
-    transition:background .1s,color .1s;
-  }
-  .btn-hapus-row:hover { background:var(--c-danger);color:#fff; }
-  .add-row {
-    display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;
-    padding:14px;background:var(--c-bg-subtle);border-radius:8px;margin-top:16px;
-  }
-  .add-row label { font-size:12px;color:var(--c-text-muted);display:block;margin-bottom:4px; }
-  .add-row input {
-    font-size:13px;padding:6px 8px;border:1px solid var(--c-border);border-radius:6px;
-    background:var(--c-bg-card);color:var(--c-text);
-  }
-  .add-row input:focus { outline:none;border-color:var(--c-primary); }
-  .search-wrap { position:relative;flex:1;min-width:220px; }
-  .search-dropdown {
-    display:none;position:absolute;z-index:200;top:100%;left:0;right:0;
-    background:var(--c-bg-card);border:1px solid var(--c-border);border-radius:8px;
-    box-shadow:0 4px 16px rgba(0,0,0,.1);max-height:220px;overflow-y:auto;margin-top:2px;
-  }
-  .search-dropdown-item {
-    padding:8px 12px;cursor:pointer;font-size:13px;
-    border-bottom:1px solid var(--c-bg-subtle);
-  }
-  .search-dropdown-item:hover { background:var(--c-bg-subtle); }
-  .edit-banner {
-    background:var(--c-success-light);color:var(--c-success);
-    font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;margin-bottom:16px;
+  .search-dropdown-item { display:flex; flex-direction: column; justify-content:center; min-height: var(--tap); padding: 8px 10px; border-radius: var(--r-control); cursor: pointer; font-size: var(--t-14); }
+  .search-dropdown-item:hover { background: var(--subtle); }
+  .form-grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-4); }
+  .add-row { display:grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-3); align-items: end; margin-top: var(--s-5); padding-top: var(--s-5); border-top: 1px solid var(--line); }
+  .add-row .form-field { margin: 0; position: relative; }
+  .save-bar { display:flex; justify-content:flex-end; gap: var(--s-2); margin-top: var(--s-2); }
+  .rel-list { list-style: none; margin: 0; padding: 0; }
+  .rel-list li { display:flex; align-items:center; gap: var(--s-3); padding: 8px 0; border-top: 1px solid var(--line); min-height: 56px; }
+  .rel-list li:first-child { border-top: 0; }
+  .rel-list .rel-main { flex: 1; min-width: 0; }
+  .rel-list form { margin: 0; }
+  @media (max-width: 720px) {
+    .form-grid { grid-template-columns: minmax(0, 1fr); }
+    .add-row { grid-template-columns: minmax(0, 1fr); }
+    .save-bar .btn { flex: 1; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-content">
-{% include "directory/_admin_nav.html" %}
+  {% include "directory/_admin_nav.html" %}
 
-<div class="page-header">
-  <h1 class="page-title">Edit Kegiatan</h1>
-  <div class="page-header-actions">
-    <a href="{% url 'admin_kegiatan_detail' kegiatan.kode %}" class="btn btn-secondary btn-sm">&larr; Kembali</a>
+  <a href="{% url 'admin_kegiatan_detail' kegiatan.kode %}" class="breadcrumb"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg>Kembali ke detail kegiatan</a>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Ubah kegiatan</h1>
+      <p class="page-sub"><span class="code">{{ kegiatan.kode }}</span>{% if kegiatan.sumber == 'otomatis' %} · Dari situs WMID{% endif %}</p>
+    </div>
   </div>
-</div>
-
-{% if messages %}
-{% for msg in messages %}<div class="edit-banner">{{ msg }}</div>{% endfor %}
-{% endif %}
 
 <form method="post">
-{% csrf_token %}
-
-<!-- Info utama -->
-<div class="card" style="padding:20px;margin-bottom:20px;display:flex;flex-direction:column;gap:16px">
-  <div style="display:flex;align-items:center;gap:10px">
-    <code style="font-size:11px;background:var(--c-bg-subtle);padding:2px 7px;border-radius:4px;color:var(--c-text-secondary)">{{ kegiatan.kode }}</code>
-    {% if kegiatan.sumber == 'otomatis' %}
-    <span style="font-size:11px;color:var(--c-text-muted)">Sumber: API</span>
-    {% endif %}
-  </div>
-  <div class="field-block">
-    <label>Judul</label>
-    <input type="text" name="judul" value="{{ kegiatan.judul }}" required style="font-size:15px;font-weight:600">
-  </div>
-  <div class="form-grid">
-    <div class="field-block">
-      <label>Tanggal mulai</label>
-      <input type="datetime-local" name="tanggal_mulai" value="{{ kegiatan.tanggal_mulai|date:'Y-m-d' }}T{{ kegiatan.tanggal_mulai|date:'H:i' }}">
+  {% csrf_token %}
+  <section class="card">
+    <h2 class="detail-section-title">Info kegiatan</h2>
+    <div class="form-field">
+      <label class="form-label" for="kg-judul">Judul</label>
+      <input type="text" id="kg-judul" name="judul" value="{{ kegiatan.judul }}" required>
     </div>
-    <div class="field-block">
-      <label>Tanggal selesai</label>
-      <input type="datetime-local" name="tanggal_selesai" value="{{ kegiatan.tanggal_selesai|date:'Y-m-d' }}T{{ kegiatan.tanggal_selesai|date:'H:i' }}">
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="kg-mulai">Mulai</label>
+        <input type="datetime-local" id="kg-mulai" name="tanggal_mulai" value="{{ kegiatan.tanggal_mulai|date:'Y-m-d' }}T{{ kegiatan.tanggal_mulai|date:'H:i' }}">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="kg-selesai">Selesai</label>
+        <input type="datetime-local" id="kg-selesai" name="tanggal_selesai" value="{{ kegiatan.tanggal_selesai|date:'Y-m-d' }}T{{ kegiatan.tanggal_selesai|date:'H:i' }}">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="kg-lokasi">Lokasi</label>
+        <input type="text" id="kg-lokasi" name="lokasi" value="{{ kegiatan.lokasi }}" placeholder="Nama kota, atau Daring">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="kg-jenis">Jenis kegiatan</label>
+        <select id="kg-jenis" name="jenis_kegiatan">
+          <option value="">Belum ditentukan</option>
+          {% for val, label in kegiatan.JENIS_CHOICES %}
+          <option value="{{ val }}" {% if kegiatan.jenis_kegiatan == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
-  </div>
-  <div class="form-grid">
-    <div class="field-block">
-      <label>Lokasi</label>
-      <input type="text" name="lokasi" value="{{ kegiatan.lokasi }}">
+    <div class="form-field">
+      <label class="form-label" for="kg-desk">Deskripsi</label>
+      <textarea id="kg-desk" name="deskripsi" rows="5">{{ kegiatan.deskripsi }}</textarea>
     </div>
-    <div class="field-block">
-      <label>Jenis kegiatan</label>
-      <select name="jenis_kegiatan">
-        <option value="">— Tidak ditentukan —</option>
-        {% for val, label in kegiatan.JENIS_CHOICES %}
-        <option value="{{ val }}" {% if kegiatan.jenis_kegiatan == val %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
+    <div class="save-bar">
+      <a href="{% url 'admin_kegiatan_detail' kegiatan.kode %}" class="btn btn-secondary">Batal</a>
+      <button type="submit" class="btn btn-primary">Simpan perubahan</button>
     </div>
-  </div>
-  <div class="field-block">
-    <label>Deskripsi</label>
-    <textarea name="deskripsi">{{ kegiatan.deskripsi }}</textarea>
-  </div>
-</div>
-
-<div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:20px">
-  <a href="{% url 'admin_kegiatan_detail' kegiatan.kode %}" class="btn btn-secondary">Batal</a>
-  <button type="submit" class="btn btn-primary">Simpan perubahan</button>
-</div>
-
+  </section>
 </form>
 
-<!-- Komunitas terkait -->
-<div class="card" style="padding:20px;margin-bottom:32px">
-  <p class="detail-section-title">Komunitas terkait <span style="font-weight:400;text-transform:none;letter-spacing:0">({{ komunitas_terpilih.count }})</span></p>
+  <section class="card">
+    <h2 class="detail-section-title">Komunitas terkait <span>{{ komunitas_terpilih.count }}</span></h2>
+    {% if komunitas_terpilih %}
+    <ul class="rel-list">
+      {% for k in komunitas_terpilih %}
+      <li>
+        <div class="rel-main">
+          <div style="font-weight:700">{{ k.nama_komunitas }}</div>
+          <div class="code">{{ k.kode }}</div>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" name="hapus_komunitas" value="{{ k.id }}" class="btn btn-danger-quiet btn-sm"
+                  onclick="confirmHapus(event, 'Kegiatan dan komunitasnya tetap ada, hanya kaitannya yang dilepas.', 'Lepaskan {{ k.nama_komunitas|escapejs }} dari kegiatan ini?', 'Lepaskan')">Lepaskan</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-inline">Belum ada komunitas terkait. Tambahkan dari kotak di bawah.</p>
+    {% endif %}
 
-  {% if komunitas_terpilih %}
-  <div class="tbl-wrap">
-    <table style="min-width:360px">
-      <thead><tr><th>Komunitas</th><th></th></tr></thead>
-      <tbody>
-        {% for k in komunitas_terpilih %}
-        <tr>
-          <td>
-            <div style="font-size:13px;font-weight:600">{{ k.nama_komunitas }}</div>
-            <div class="meta">{{ k.kode }}</div>
-          </td>
-          <td style="text-align:right">
-            <form method="post" style="display:inline">
-              {% csrf_token %}
-              <button type="submit" name="hapus_komunitas" value="{{ k.id }}" class="btn-hapus-row"
-                onclick="confirmHapus(event, 'Lepas komunitas ini dari kegiatan?')">Hapus</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p class="meta" style="margin-bottom:0">Belum ada komunitas terkait.</p>
-  {% endif %}
-
-  <!-- Tambah komunitas -->
-  <script id="komunitas-data" type="application/json">
-    [{% for k in komunitas_tersedia %}{"id":{{ k.id }},"nama":"{{ k.nama_komunitas|escapejs }}","kode":"{{ k.kode }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
-  </script>
-  <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="new_komunitas_id" id="new-kom-id">
-    <div class="add-row">
-      <div class="search-wrap">
-        <label>Tambah komunitas</label>
-        <input type="text" id="kom-search" placeholder="Cari nama atau kode…" autocomplete="off" style="width:100%;box-sizing:border-box">
-        <div id="kom-dropdown" class="search-dropdown"></div>
+    <script id="komunitas-data" type="application/json">
+      [{% for k in komunitas_tersedia %}{"id":{{ k.id }},"nama":"{{ k.nama_komunitas|escapejs }}","kode":"{{ k.kode }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+    </script>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="new_komunitas_id" id="new-kom-id">
+      <div class="add-row">
+        <div class="form-field search-wrap">
+          <label class="form-label" for="kom-search">Tambah komunitas</label>
+          <input type="text" id="kom-search" placeholder="Cari nama atau kode komunitas" autocomplete="off">
+          <div id="kom-dropdown" class="search-dropdown"></div>
+        </div>
+        <button type="submit" name="_add_komunitas" value="1" class="btn btn-secondary" id="btn-add-kom" disabled><svg class="ico" aria-hidden="true"><use href="#i-tambah"/></svg>Tambahkan</button>
       </div>
-      <button type="submit" name="_add_komunitas" value="1" class="btn btn-secondary btn-sm" id="btn-add-kom" disabled>Tambah</button>
-    </div>
-  </form>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2 class="detail-section-title">Peserta <span>{{ peserta_qs.count }}</span></h2>
+    {% if peserta_qs %}
+    <ul class="rel-list">
+      {% for ka in peserta_qs %}
+      <li>
+        <span class="mini-av" aria-hidden="true">{{ ka.member.display_label|initials }}</span>
+        <div class="rel-main">
+          <div style="font-weight:700">{{ ka.member.display_label }}</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:2px">
+            <span class="chip chip-sm"><svg class="ico" aria-hidden="true"><use href="#{{ ka.role|role_icon }}"/></svg>{{ ka.get_role_display }}</span>
+            {% if ka.status == 'menunggu' %}<span class="st st-wait"><svg class="ico" aria-hidden="true"><use href="#i-jam"/></svg>Menunggu verifikasi</span>
+            {% elif ka.status == 'terverifikasi' %}<span class="st st-ok"><svg class="ico" aria-hidden="true"><use href="#i-cek"/></svg>Terverifikasi</span>{% endif %}
+          </div>
+          {% if ka.catatan %}<div class="meta" style="margin-top:2px">{{ ka.catatan }}</div>{% endif %}
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" name="hapus_peserta" value="{{ ka.pk }}" class="btn btn-danger-quiet btn-sm"
+                  onclick="confirmHapus(event, 'Riwayat kegiatan ini akan hilang dari profilnya.', 'Hapus {{ ka.member.display_label|escapejs }} dari daftar peserta?', 'Hapus peserta')">Hapus</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-inline">Belum ada peserta. Tambahkan lewat Impor peserta di halaman detail kegiatan.</p>
+    {% endif %}
+  </section>
 </div>
 
 <script>
@@ -188,12 +158,12 @@
   function render(items) {
     dropdown.innerHTML = '';
     if (!items.length) {
-      dropdown.innerHTML = '<div class="search-dropdown-item" style="color:var(--c-text-muted)">Tidak ditemukan.</div>';
+      dropdown.innerHTML = '<div class="combo-empty">Tidak ada komunitas yang cocok.</div>';
     }
     items.slice(0, 40).forEach(k => {
       const d = document.createElement('div');
       d.className = 'search-dropdown-item';
-      d.innerHTML = `<div style="font-weight:600">${k.nama}</div><div style="font-size:11px;color:var(--c-text-muted)">${k.kode}</div>`;
+      d.innerHTML = `<div style="font-weight:700">${k.nama}</div><div class="code">${k.kode}</div>`;
       d.addEventListener('mousedown', e => {
         e.preventDefault();
         input.value  = k.nama;
@@ -221,58 +191,4 @@
   });
 })();
 </script>
-
-<!-- Peserta -->
-<div class="card" style="padding:20px;margin-bottom:32px">
-  <p class="detail-section-title">Peserta <span style="font-weight:400;text-transform:none;letter-spacing:0">({{ peserta_qs.count }})</span></p>
-
-  {% if peserta_qs %}
-  <div class="tbl-wrap">
-    <table style="min-width:400px">
-      <thead>
-        <tr>
-          <th>Anggota</th>
-          <th>Peran</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for ka in peserta_qs %}
-        <tr>
-          <td>
-            <div style="font-size:13px;font-weight:600">{{ ka.member.display_label }}</div>
-            {% if ka.catatan %}<div class="meta">{{ ka.catatan }}</div>{% endif %}
-          </td>
-          <td style="font-size:12px">{{ ka.get_role_display }}</td>
-          <td>
-            {% if ka.status == 'menunggu' %}
-            <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--c-warning-light, #fff8e1);color:var(--c-warning, #f59e0b)">Menunggu</span>
-            {% elif ka.status == 'terverifikasi' %}
-            <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--c-success-light);color:var(--c-success)">Terverifikasi</span>
-            {% endif %}
-          </td>
-          <td style="text-align:right">
-            <form method="post" style="display:inline">
-              {% csrf_token %}
-              <button type="submit" name="hapus_peserta" value="{{ ka.pk }}" class="btn-hapus-row"
-                onclick="confirmHapus(event, 'Hapus {{ ka.member.display_label|escapejs }} dari kegiatan ini?')">Hapus</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p class="meta" style="margin-bottom:0">Belum ada peserta terdaftar.</p>
-  {% endif %}
-</div>
-
-<style>
-  @media (max-width:640px) {
-    .form-grid { grid-template-columns:1fr !important; }
-    .add-row { flex-direction:column;align-items:stretch; }
-  }
-</style>
 {% endblock %}

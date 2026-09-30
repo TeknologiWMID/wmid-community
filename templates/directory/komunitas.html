@@ -1,192 +1,124 @@
 {% extends "directory/base.html" %}
-{% block title %}Komunitas Wikimedia Indonesia{% endblock %}
+{% load directory_tags %}
+{% block title %}Komunitas · Direktori Anggota WMID{% endblock %}
 
 {% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-  /* ── Grid kartu ── */
-  .komunitas-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 16px;
-  }
+  .komunitas-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--s-4); }
   a.k-card {
-    display: flex; flex-direction: column; gap: 10px;
-    padding: 16px; border: 1px solid var(--c-border);
-    border-radius: var(--radius); background: var(--c-bg-card);
-    text-decoration: none; color: inherit;
-    transition: box-shadow .15s, border-color .15s;
+    display:flex; flex-direction: column; gap: var(--s-3); padding: var(--s-5);
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card);
+    color: var(--ink); text-decoration: none; min-width: 0;
   }
-  a.k-card:hover { border-color: var(--c-primary); box-shadow: var(--shadow-elevated); }
-  .k-logo {
-    width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
-    object-fit: contain; border: 1px solid var(--c-border);
-    background: var(--c-bg-subtle); padding: 4px;
-  }
-  .k-logo-fb {
-    width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 700; color: #fff;
-  }
-  .k-name { font-size: 13px; font-weight: 700; line-height: 1.4; }
-  .k-desc {
-    font-size: 12px; color: var(--c-text-secondary); line-height: 1.55; flex: 1;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .k-foot { margin-top: auto; font-size: 12px; color: var(--c-primary); display: flex; align-items: center; gap: 4px; }
+  a.k-card:hover { border-color: var(--primary); color: var(--ink); }
+  a.k-card:active { background: var(--subtle); }
+  .k-head { display:flex; gap: var(--s-3); align-items: center; }
+  .k-head .logo-box { width: 48px; height: 48px; }
+  .k-name { font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+  .k-desc { font-size: var(--t-14); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .k-desc.is-empty { color: var(--muted); }
 
-  /* ── Toggle ── */
-  .view-toggle { display: flex; gap: 4px; }
+  .view-toggle { display:inline-flex; padding: 3px; border-radius: var(--r-control); background: var(--subtle); }
   .view-toggle button {
-    padding: 6px 14px; font-size: 13px; border-radius: var(--radius-sm);
-    border: 1px solid var(--c-border); background: var(--c-bg-subtle);
-    color: var(--c-text-secondary); cursor: pointer; transition: .12s;
-    display: inline-flex; align-items: center; gap: 6px;
+    display:inline-flex; align-items:center; gap: 6px; min-height: 38px; padding: 0 14px; border: 0; border-radius: 4px;
+    background: transparent; color: var(--ink-2); font-size: var(--t-14); font-weight: 700; cursor: pointer;
   }
-  .view-toggle button.active { background: var(--c-primary); border-color: var(--c-primary); color: #fff; }
+  .view-toggle button.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .view-toggle .ico { width: 16px; height: 16px; }
 
-  /* ── Map wrapper ── */
   #map-wrap { display: none; position: relative; }
-  #komunitas-map {
-    height: 540px; border-radius: var(--radius-sm);
-    border: 1px solid var(--c-border); background: var(--c-bg-subtle);
-  }
-
-  /* Panel kanan di atas peta */
+  #komunitas-map { height: 560px; border-radius: var(--r-card); border: 1px solid var(--line); background: var(--subtle); z-index: 0; }
   #map-panel {
-    position: absolute; bottom: 10px; right: 10px; z-index: 1000;
-    width: 232px; background: var(--c-bg-card);
-    border-radius: var(--radius); border: 1px solid var(--c-border);
-    box-shadow: var(--shadow-elevated);
-    overflow: hidden; max-height: 380px;
-    display: flex; flex-direction: column;
+    position: absolute; bottom: 12px; right: 12px; z-index: 1000; width: 260px; max-height: 380px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-float);
+    overflow: hidden; display: flex; flex-direction: column;
   }
-  #map-panel-header {
-    padding: 10px 14px 8px;
-    border-bottom: 1px solid var(--c-border);
-    background: var(--c-bg);
-    font-size: 10px; font-weight: 700; letter-spacing: .06em;
-    text-transform: uppercase; color: var(--c-text-muted); flex-shrink: 0;
-  }
-  #map-panel-list { overflow-y: auto; flex: 1; }
-  .panel-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 14px; border-bottom: 1px solid var(--c-bg-subtle);
-    cursor: pointer; transition: background .1s;
-  }
-  .panel-item:last-child { border-bottom: none; }
-  .panel-item:hover { background: var(--c-primary-light); }
-  .panel-item-logo {
-    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
-    overflow: hidden; background: var(--c-bg-card);
-    display: flex; align-items: center; justify-content: center;
-    border: 2.5px solid var(--c-border);
-  }
+  #map-panel-header { padding: 12px 14px 10px; border-bottom: 1px solid var(--line); font-size: var(--t-13); font-weight: 800; }
+  #map-panel-header span { display:block; font-weight: 500; color: var(--muted); font-size: var(--t-12); }
+  #map-panel-list { list-style: none; margin: 0; padding: 4px; overflow-y: auto; flex: 1; }
+  .panel-item { display:flex; align-items:center; gap: 10px; min-height: var(--tap); padding: 6px 10px; border-radius: var(--r-control); cursor: pointer; }
+  .panel-item:hover { background: var(--subtle); }
+  .panel-item-logo { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; overflow: hidden; background: var(--surface); display:flex; align-items:center; justify-content:center; border: 2.5px solid var(--line); }
   .panel-item-logo img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
-  .panel-item-name  { font-size: 12px; font-weight: 600; color: var(--c-text); line-height: 1.3; }
-  .panel-item-jenis { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 99px; margin-top: 2px; display: inline-block; }
-
-  /* Detail card overlay */
+  .panel-item-name { font-size: var(--t-13); font-weight: 700; line-height: 1.3; }
+  .panel-item-jenis { font-size: var(--t-12); font-weight: 700; padding: 0 6px; border-radius: 4px; margin-top: 2px; display: inline-block; }
   #map-detail {
-    position: absolute; bottom: 12px; right: 10px; z-index: 1001;
-    width: 240px; background: var(--c-bg-card); border-radius: var(--radius);
-    border: 1px solid var(--c-border); box-shadow: var(--shadow-elevated);
+    position: absolute; bottom: 12px; right: 12px; z-index: 1001; width: 280px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-float);
     overflow: hidden; display: none;
   }
-  #map-detail-close {
-    position: absolute; top: 8px; right: 8px; width: 22px; height: 22px;
-    border-radius: 50%; border: none; background: var(--c-bg-subtle); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--c-text-secondary);
-  }
-  #map-detail-close:hover { background: var(--c-border); }
-  @media (max-width: 600px) {
-    #map-panel, #map-detail { position: static; width: 100%; margin-top: 10px; max-height: none; border-radius: var(--radius); }
-    #komunitas-map { height: 360px; }
+  #map-detail-close { position: absolute; top: 6px; right: 6px; width: 36px; height: 36px; border-radius: var(--r-control); border: 0; background: transparent; cursor: pointer; color: var(--muted); display:grid; place-items:center; }
+  #map-detail-close:hover { background: var(--subtle); color: var(--ink); }
+  .leaflet-popup-content { font-family: var(--f-ui); }
+  @media (max-width: 720px) {
+    #komunitas-map { height: 58dvh; min-height: 320px; }
+    #map-panel, #map-detail { position: static; width: 100%; margin-top: var(--s-3); max-height: none; box-shadow: none; }
+    .page-header { flex-wrap: wrap; }
+    .page-header-actions { width: 100%; }
+    .view-toggle { flex: 1; } .view-toggle button { flex: 1; justify-content: center; }
   }
 </style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 {% endblock %}
 
 {% block content %}
 <div class="page-content">
-
   <div class="page-header">
     <div>
       <h1 class="page-title">Komunitas</h1>
-      <p class="meta">{{ komunitas|length }} komunitas Wikimedia aktif di Indonesia.</p>
+      <p class="page-sub">{{ komunitas|length }} komunitas Wikimedia di Indonesia</p>
     </div>
     <div class="page-header-actions">
-      <div class="view-toggle">
-        <button id="btn-card" class="active" onclick="setView('card')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          Kartu
-        </button>
-        <button id="btn-map" onclick="setView('map')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-          Peta
-        </button>
+      <div class="view-toggle" role="group" aria-label="Tampilan">
+        <button id="btn-card" type="button" class="active" aria-pressed="true" onclick="setView('card')"><svg class="ico" aria-hidden="true"><use href="#i-daftar"/></svg>Daftar</button>
+        <button id="btn-map" type="button" aria-pressed="false" onclick="setView('map')"><svg class="ico" aria-hidden="true"><use href="#i-peta"/></svg>Peta</button>
       </div>
       {% if member.is_admin %}
-      <a href="{% url 'sync_komunitas' %}" class="btn btn-secondary btn-sm">Sinkronkan</a>
+      <a href="{% url 'sync_komunitas' %}" class="btn btn-secondary"><svg class="ico" aria-hidden="true"><use href="#i-sinkron"/></svg>Sinkronkan dari situs WMID</a>
       {% endif %}
     </div>
   </div>
 
-  {# ── Card view ── #}
   <div id="card-view">
     {% if komunitas %}
     <div class="komunitas-grid">
       {% for k in komunitas %}
       <a href="{% url 'komunitas_detail' k.slug %}" class="k-card">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          {% if k.logo %}
-            <img src="{{ k.logo }}" alt="" class="k-logo">
-          {% else %}
-            <div class="k-logo-fb">{{ k.nama_komunitas|first|upper }}</div>
-          {% endif %}
-          <div style="flex:1;min-width:0">
+        <div class="k-head">
+          <span class="logo-box" aria-hidden="true">{% if k.logo %}<img src="{{ k.logo }}" alt="" loading="lazy">{% else %}{{ k.nama_komunitas|initials }}{% endif %}</span>
+          <div style="min-width:0">
             <div class="k-name">{{ k.nama_komunitas }}</div>
-            {% if k.jenis_komunitas %}
-              <span class="jenis-badge jenis-{{ k.jenis_komunitas }}" style="margin-top:4px">{{ k.jenis_label }}</span>
-            {% endif %}
+            {% if k.jenis_komunitas %}<span class="chip chip-sm" style="margin-top:4px"><svg class="ico" aria-hidden="true"><use href="#{{ k.jenis_komunitas|jenis_icon }}"/></svg>{{ k.jenis_label }}</span>{% endif %}
           </div>
         </div>
-        {% if k.deskripsi %}
-          <p class="k-desc">{{ k.deskripsi }}</p>
-        {% else %}
-          <p class="k-desc" style="visibility:hidden;pointer-events:none">-</p>
-        {% endif %}
-        <div class="k-foot">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          Lihat detail
-        </div>
+        {% if k.deskripsi %}<p class="k-desc">{{ k.deskripsi }}</p>{% else %}<p class="k-desc is-empty">Belum ada deskripsi.</p>{% endif %}
       </a>
       {% endfor %}
     </div>
     {% else %}
-    <div class="empty-state">
-      <p style="margin-bottom:8px">Belum ada data komunitas.</p>
+    <div class="card empty-state">
+      <strong>Belum ada komunitas.</strong>
       {% if member.is_admin %}
-        <a href="{% url 'sync_komunitas' %}" class="btn btn-primary btn-sm">Sinkronkan sekarang</a>
+        <p>Tarik datanya dari situs WMID untuk mulai.</p>
+        <a href="{% url 'sync_komunitas' %}" class="btn btn-primary">Sinkronkan sekarang</a>
       {% else %}
-        <p class="meta">Hubungi admin untuk melakukan sinkronisasi.</p>
+        <p>Daftar komunitas belum diisi. Hubungi pengurus WMID.</p>
       {% endif %}
     </div>
     {% endif %}
   </div>
 
-  {# ── Map view ── #}
   <div id="map-wrap">
-    <div id="komunitas-map"></div>
+    <div id="komunitas-map" role="region" aria-label="Peta komunitas"></div>
     <div id="map-panel">
-      <div id="map-panel-header">Komunitas Proyek</div>
+      <div id="map-panel-header">Belum ada di peta<span>Komunitas tanpa koordinat lokasi</span></div>
       <ul id="map-panel-list"></ul>
     </div>
     <div id="map-detail">
-      <button id="map-detail-close" onclick="closeDetail()">✕</button>
+      <button id="map-detail-close" type="button" onclick="closeDetail()" aria-label="Tutup"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div id="map-detail-inner"></div>
     </div>
   </div>
-
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -220,6 +152,8 @@ let mapInited = false, leafletMap = null;
 function setView(v) {
   document.getElementById('btn-card').classList.toggle('active', v === 'card');
   document.getElementById('btn-map').classList.toggle('active', v === 'map');
+  document.getElementById('btn-card').setAttribute('aria-pressed', String(v === 'card'));
+  document.getElementById('btn-map').setAttribute('aria-pressed', String(v === 'map'));
   document.getElementById('card-view').style.display = v === 'card' ? 'block' : 'none';
   document.getElementById('map-wrap').style.display  = v === 'map'  ? 'block' : 'none';
   if (v === 'map') {
@@ -263,7 +197,7 @@ function initMap() {
           </div>
         </div>
         ${desc ? `<p style="font-size:11.5px;color:#555;line-height:1.55;margin:0 0 8px">${desc}</p>` : ''}
-        <a href="/komunitas/${p.slug}/" style="font-size:12px;font-weight:600;color:#006A9F">Lihat detail</a>
+        <a href="/komunitas/${p.slug}/" style="font-size:12px;font-weight:600;color:#0E5E5A">Buka halaman komunitas</a>
       </div>`;
     L.marker([p.lat, p.lng], { icon }).addTo(leafletMap).bindPopup(popup, { maxWidth: 240 });
   });
@@ -307,9 +241,9 @@ function showDetail(c, color) {
         <span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:${color}22;color:${color};margin-top:3px;display:inline-block">${c.jenis}</span>
       </div>
     </div>
-    ${desc ? `<p style="font-size:12px;color:#555;line-height:1.55;margin:0 14px 10px">${desc}</p>` : ''}
+    ${desc ? `<p style="font-size:13px;color:var(--ink-2);line-height:1.55;margin:0 14px 10px">${desc}</p>` : ''}
     <div style="padding:0 14px 14px;display:flex;gap:8px">
-      <a href="/komunitas/${c.slug}/" class="btn btn-primary btn-sm">Lihat detail</a>
+      <a href="/komunitas/${c.slug}/" class="btn btn-primary btn-sm">Buka halaman</a>
       ${c.pranala ? `<a href="${c.pranala}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Halaman wiki</a>` : ''}
     </div>`;
   el.style.display = 'block';
@@ -319,7 +253,7 @@ function showDetail(c, color) {
 function closeDetail() {
   document.getElementById('map-detail').style.display = 'none';
   const noCoord = {{ no_coord_json|safe }};
-  if (noCoord.length > 0) document.getElementById('map-panel').style.display = 'flex';
+  if (noCoord.length > 0) document.getElementById('map-panel').style.display = '';
 }
 </script>
 {% endblock %}

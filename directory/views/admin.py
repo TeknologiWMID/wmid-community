@@ -15,7 +15,7 @@ from .utils import get_session_member
 def _require_admin(request):
     viewer = get_session_member(request)
     if not viewer or not viewer.is_admin:
-        messages.error(request, 'Akses ditolak.')
+        messages.error(request, 'Halaman itu khusus pengurus. Kamu dikembalikan ke beranda.')
         return None, redirect('index')
     return viewer, None
 
@@ -299,7 +299,7 @@ def admin_anggota_edit(request, pk):
         new_role = request.POST.get('role', '')
         if new_role in [Member.ROLE_USER, Member.ROLE_ADMIN]:
             if target.pk == viewer.pk and new_role != Member.ROLE_ADMIN:
-                messages.error(request, 'Admin tidak dapat mengubah role dirinya sendiri.')
+                messages.error(request, 'Kamu tidak bisa mengubah peranmu sendiri. Minta pengurus lain untuk mengubahnya.')
                 return redirect('admin_anggota_edit', pk=target.pk)
             target.role = new_role
 
@@ -342,7 +342,7 @@ def admin_anggota_edit(request, pk):
             if changed:
                 r.save(update_fields=changed)
 
-        messages.success(request, 'Data anggota berhasil diperbarui.')
+        messages.success(request, 'Perubahan data anggota tersimpan.')
         return redirect('admin_anggota_detail', pk=target.pk)
 
     komunitas_all  = Komunitas.objects.order_by('nama_komunitas')
@@ -490,7 +490,7 @@ def admin_komunitas_edit(request, slug):
 
         komunitas.save(update_fields=['nama_komunitas', 'jenis_komunitas', 'deskripsi', 'pranala_informasi', 'logo', 'is_active', 'narahubung'])
 
-        messages.success(request, 'Data komunitas berhasil diperbarui.')
+        messages.success(request, 'Perubahan data komunitas tersimpan.')
         return redirect('admin_komunitas_detail', slug=komunitas.slug)
 
     anggota_qs = (
@@ -686,7 +686,7 @@ def admin_kegiatan_edit(request, kode):
         if hapus_peserta:
             try:
                 KegiatanAnggota.objects.filter(pk=int(hapus_peserta), kegiatan=kegiatan).delete()
-                messages.success(request, 'Peserta berhasil dihapus.')
+                messages.success(request, 'Peserta dihapus dari kegiatan.')
             except (ValueError, TypeError):
                 pass
             return redirect('admin_kegiatan_edit', kode=kegiatan.kode)
@@ -734,7 +734,7 @@ def admin_kegiatan_edit(request, kode):
             'judul', 'deskripsi', 'lokasi', 'jenis_kegiatan',
             'tanggal_mulai', 'tanggal_selesai',
         ])
-        messages.success(request, 'Kegiatan berhasil diperbarui.')
+        messages.success(request, 'Perubahan kegiatan tersimpan.')
         return redirect('admin_kegiatan_detail', kode=kegiatan.kode)
 
     komunitas_terpilih = kegiatan.komunitas.all()
@@ -956,7 +956,7 @@ def admin_komunitas_verify(request, entry_id):
     from directory.models import KomunitasAnggota
     entry = KomunitasAnggotaPending.objects.filter(pk=entry_id).select_related('member', 'komunitas').first()
     if not entry:
-        messages.error(request, 'Data tidak ditemukan.')
+        messages.error(request, 'Permintaan ini sudah tidak ada. Mungkin sudah diproses pengurus lain.')
         return redirect('admin_verifikasi')
 
     action = request.POST.get('action', '').strip()
@@ -969,10 +969,10 @@ def admin_komunitas_verify(request, entry_id):
                 member=entry.member, komunitas=entry.komunitas,
                 defaults={'added_by': viewer},
             )
-            messages.success(request, f'{name} berhasil bergabung dengan {kom}.')
+            messages.success(request, f'{name} sekarang anggota {kom}.')
         elif entry.tipe == KomunitasAnggotaPending.TIPE_KELUAR:
             KomunitasAnggota.objects.filter(member=entry.member, komunitas=entry.komunitas).delete()
-            messages.success(request, f'{name} dikeluarkan dari {kom}.')
+            messages.success(request, f'{name} sudah keluar dari {kom}.')
         entry.delete()
     elif action == 'tolak':
         entry.delete()
@@ -990,7 +990,7 @@ def admin_kegiatan_verify(request, entry_id):
 
     entry = KegiatanAnggota.objects.filter(pk=entry_id).select_related('kegiatan', 'member').first()
     if not entry:
-        messages.error(request, 'Data tidak ditemukan.')
+        messages.error(request, 'Permintaan ini sudah tidak ada. Mungkin sudah diproses pengurus lain.')
         return redirect('admin_verifikasi')
 
     action = request.POST.get('action', '').strip()
@@ -999,11 +999,11 @@ def admin_kegiatan_verify(request, entry_id):
         entry.verified_by = viewer
         entry.verified_at = timezone.now()
         entry.save(update_fields=['status', 'verified_by', 'verified_at'])
-        messages.success(request, f'Pendaftaran {entry.member.display_label} diterima.')
+        messages.success(request, f'Riwayat {entry.member.display_label} terverifikasi.')
     elif action == 'tolak':
         name = entry.member.display_label
         entry.delete()
-        messages.info(request, f'Pendaftaran {name} ditolak dan dihapus.')
+        messages.info(request, f'Catatan {name} ditolak dan dihapus.')
 
     return redirect('admin_verifikasi')
 
@@ -1044,8 +1044,8 @@ def admin_kegiatan_assign(request, kode):
         },
     )
     if not created:
-        messages.info(request, f'{target.display_label} sudah terdaftar di kegiatan ini.')
+        messages.info(request, f'{target.display_label} sudah ada di daftar peserta.')
     else:
-        messages.success(request, f'{target.display_label} berhasil ditambahkan sebagai {obj.get_role_display()}.')
+        messages.success(request, f'{target.display_label} ditambahkan sebagai {obj.get_role_display().lower()}.')
 
     return redirect('kegiatan_detail', kode=kode)
