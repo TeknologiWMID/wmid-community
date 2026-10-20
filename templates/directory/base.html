@@ -4,12 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}Direktori Anggota WMID{% endblock %}</title>
-  <script>
-    /* Tema tampilan: 'light' | 'dark' | kosong (ikuti sistem). Hanya preferensi per browser. */
-    (function () {
-      try { var t = localStorage.getItem('wmid-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
-    })();
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -54,27 +48,6 @@
       --font:var(--f-ui);
       color-scheme: light;
     }
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) {
-        --bg:#0E151B; --surface:#151F27; --subtle:#1C2833; --line:#293745; --line-strong:#6A7A8A;
-        --ink:#E3EAF0; --ink-2:#BCC8D3; --muted:#A2B0BD;
-        --primary:#7DBDE8; --primary-strong:#A3D2F2; --primary-soft:#15324A; --on-primary:#0E151B;
-        --success:#7AD3A0; --success-soft:#16301F; --warning:#F2C45A; --warning-soft:#33290F;
-        --danger:#FF9A8C; --danger-soft:#3A1A17; --busy:#E0A63A; --idle:#8E9CAA;
-        --scrim: rgba(0,0,0,.6); --shadow-float: 0 8px 28px rgba(0,0,0,.5);
-        color-scheme: dark;
-      }
-    }
-    :root[data-theme="dark"] {
-      --bg:#0E151B; --surface:#151F27; --subtle:#1C2833; --line:#293745; --line-strong:#6A7A8A;
-      --ink:#E3EAF0; --ink-2:#BCC8D3; --muted:#A2B0BD;
-      --primary:#7DBDE8; --primary-strong:#A3D2F2; --primary-soft:#15324A; --on-primary:#0E151B;
-      --success:#7AD3A0; --success-soft:#16301F; --warning:#F2C45A; --warning-soft:#33290F;
-      --danger:#FF9A8C; --danger-soft:#3A1A17; --busy:#E0A63A; --idle:#8E9CAA;
-      --scrim: rgba(0,0,0,.6); --shadow-float: 0 8px 28px rgba(0,0,0,.5);
-      color-scheme: dark;
-    }
-
     /* ── Dasar ─────────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; }
     html { -webkit-text-size-adjust: 100%; }
@@ -146,14 +119,13 @@
     .nav-dd-header { padding: 10px 12px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
     .nav-dd-name { font-weight: 800; font-size: var(--t-14); }
     .nav-dd-handle { font-size: var(--t-13); color: var(--muted); overflow-wrap: anywhere; }
-    .nav-dropdown a, .nav-dropdown button.dd-item {
+    .nav-dropdown a {
       display:flex; align-items:center; gap: 10px; width: 100%; min-height: var(--tap); padding: 0 12px;
       border: 0; background: none; border-radius: var(--r-control); cursor: pointer;
       font-size: var(--t-14); font-weight: 600; color: var(--ink); text-decoration: none; text-align: left;
     }
-    .nav-dropdown a:hover, .nav-dropdown button.dd-item:hover { background: var(--subtle); color: var(--ink); }
+    .nav-dropdown a:hover { background: var(--subtle); color: var(--ink); }
     .nav-dropdown .ico { color: var(--muted); }
-    .dd-item .dd-value { margin-left: auto; font-size: var(--t-13); color: var(--muted); font-weight: 600; }
     .nav-dd-sep { height: 1px; background: var(--line); margin: 6px 0; }
     .nav-dropdown a.nav-dd-out, .nav-dropdown a.nav-dd-out .ico { color: var(--danger); }
     .nav-dropdown a.nav-dd-out:hover { background: var(--danger-soft); }
@@ -545,7 +517,6 @@
     .toast-error .toast-icon   { color: #FF9A8C; }
     .toast-warning .toast-icon { color: #F2C45A; }
     .toast-info .toast-icon    { color: #7DBDE8; }
-    :root[data-theme="dark"] .toast-success .toast-icon { color: #1D6B43; }
     .toast-body { flex: 1; font-size: var(--t-14); line-height: 1.5; font-weight: 500; }
     .toast-close { width: 32px; height: 32px; display:grid; place-items:center; flex-shrink: 0; border: 0; background: none; color: inherit; opacity: .7; cursor: pointer; border-radius: var(--r-control); margin: -6px -2px 0 0; }
     .toast-close:hover { opacity: 1; }
@@ -630,7 +601,6 @@
         </div>
         <a href="{% url 'profile' %}" role="menuitem"><svg class="ico" aria-hidden="true"><use href="#i-profil"/></svg>Profil saya</a>
         <a href="{% url 'profile_edit' %}" role="menuitem"><svg class="ico" aria-hidden="true"><use href="#i-ubah"/></svg>Ubah profil</a>
-        <button type="button" class="dd-item" id="theme-toggle" role="menuitem"><svg class="ico" aria-hidden="true"><use href="#i-tema"/></svg>Tema tampilan<span class="dd-value" id="theme-value">Ikuti perangkat</span></button>
         <div class="nav-dd-sep"></div>
         <a href="{% url 'logout' %}" class="nav-dd-out" role="menuitem"><svg class="ico" aria-hidden="true"><use href="#i-keluar"/></svg>Keluar dari akun</a>
       </div>
@@ -893,25 +863,6 @@
     dd.addEventListener('click', function(e) { e.stopPropagation(); });
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && dd.classList.contains('is-open')) { set(false); toggle.focus(); }
-    });
-  })();
-
-  // Tema tampilan: Ikuti perangkat -> Terang -> Gelap
-  (function() {
-    var btn = document.getElementById('theme-toggle');
-    var val = document.getElementById('theme-value');
-    if (!btn) return;
-    var order = ['', 'light', 'dark'];
-    var labels = { '': 'Ikuti perangkat', light: 'Terang', dark: 'Gelap' };
-    function current() { return document.documentElement.getAttribute('data-theme') || ''; }
-    function show() { val.textContent = labels[current()]; }
-    show();
-    btn.addEventListener('click', function() {
-      var next = order[(order.indexOf(current()) + 1) % order.length];
-      if (next) document.documentElement.setAttribute('data-theme', next);
-      else document.documentElement.removeAttribute('data-theme');
-      try { if (next) localStorage.setItem('wmid-theme', next); else localStorage.removeItem('wmid-theme'); } catch (e) {}
-      show();
     });
   })();
 </script>
