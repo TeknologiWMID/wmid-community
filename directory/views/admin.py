@@ -670,6 +670,61 @@ def admin_kegiatan_detail(request, kode):
     })
 
 
+def admin_kegiatan_tambah(request):
+    viewer, denied = _require_admin(request)
+    if denied:
+        return denied
+
+    from django.utils.dateparse import parse_datetime
+
+    def _aware(raw):
+        dt = parse_datetime(raw) if raw else None
+        if dt and timezone.is_naive(dt):
+            dt = timezone.make_aware(dt)
+        return dt
+
+    form = {}
+    kom_ids = set()
+    if request.method == 'POST':
+        form = {k: request.POST.get(k, '').strip() for k in
+                ('judul', 'tanggal_mulai', 'tanggal_selesai', 'lokasi', 'jenis_kegiatan', 'deskripsi')}
+        kom_ids = {int(i) for i in request.POST.getlist('komunitas') if i.isdigit()}
+        mulai, selesai = _aware(form['tanggal_mulai']), _aware(form['tanggal_selesai'])
+
+        if not form['judul']:
+            messages.error(request, 'Judul kegiatan wajib diisi.')
+        elif not mulai or not selesai:
+            messages.error(request, 'Isi tanggal dan jam mulai serta selesai.')
+        elif selesai < mulai:
+            messages.error(request, 'Waktu selesai tidak boleh lebih awal dari waktu mulai.')
+        else:
+            jenis = form['jenis_kegiatan'] if form['jenis_kegiatan'] in Kegiatan.JENIS_VALUES else ''
+            kegiatan = Kegiatan.objects.create(
+                judul=form['judul'],
+                deskripsi=form['deskripsi'],
+                tanggal_mulai=mulai,
+                tanggal_selesai=selesai,
+                lokasi=form['lokasi'],
+                jenis_kegiatan=jenis,
+                sumber=Kegiatan.SUMBER_ADMIN,
+                dibuat_oleh=viewer,
+            )
+            if kom_ids:
+                kegiatan.komunitas.set(Komunitas.objects.filter(pk__in=kom_ids))
+            messages.success(request, f'Kegiatan {kegiatan.kode} ditambahkan. Sekarang kamu bisa menambahkan peserta.')
+            return redirect('admin_kegiatan_detail', kode=kegiatan.kode)
+
+    return render(request, 'directory/admin_kegiatan_tambah.html', {
+        'member':        viewer,
+        'form':          form,
+        'kom_ids':       kom_ids,
+        'jenis_choices': Kegiatan.JENIS_CHOICES,
+        'komunitas_all': Komunitas.objects.order_by('nama_komunitas').only('id', 'nama_komunitas', 'kode'),
+        'pending_count': _pending_count(),
+        'active_admin':  'kegiatan',
+    })
+
+
 def admin_kegiatan_edit(request, kode):
     viewer, denied = _require_admin(request)
     if denied:

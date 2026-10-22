@@ -12,6 +12,7 @@ from .admin import (
     admin_kegiatan_import,
     admin_kegiatan_detail,
     admin_kegiatan_edit,
+    admin_kegiatan_tambah,
     admin_kegiatan_list,
     admin_kegiatan_verify,
     admin_komunitas_verify,

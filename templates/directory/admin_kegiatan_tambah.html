@@ -1,0 +1,119 @@
+{% extends "directory/base.html" %}
+{% block title %}Tambah kegiatan · Pengurus WMID{% endblock %}
+{% block body_class %}density-meja{% endblock %}
+
+{% block head %}
+<style>
+  .form-grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-4); }
+  .save-bar { display:flex; justify-content:flex-end; gap: var(--s-2); margin-top: var(--s-5); }
+  .kom-scroll { max-height: 320px; overflow-y: auto; margin: var(--s-3) calc(-1 * var(--s-2)) 0; padding-inline: var(--s-2); }
+  .kom-checkbox-item { display:flex; align-items:center; gap: var(--s-3); min-height: var(--tap); padding: 6px 8px; border-radius: var(--r-control); cursor: pointer; }
+  .kom-checkbox-item:hover { background: var(--subtle); }
+  .kom-label-sub { font-size: var(--t-12); color: var(--muted); font-family: var(--f-code); }
+  @media (max-width: 720px) {
+    .form-grid { grid-template-columns: minmax(0, 1fr); }
+    .save-bar .btn { flex: 1; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+  {% include "directory/_admin_nav.html" %}
+
+  <a href="{% url 'admin_kegiatan_data' %}" class="breadcrumb"><svg class="ico" aria-hidden="true"><use href="#i-kiri"/></svg>Kembali ke daftar kegiatan</a>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Tambah kegiatan</h1>
+      <p class="page-sub">Kode kegiatan dibuat otomatis setelah disimpan. Peserta ditambahkan di langkah berikutnya.</p>
+    </div>
+  </div>
+
+<form method="post">
+  {% csrf_token %}
+  <section class="card">
+    <h2 class="detail-section-title">Info kegiatan</h2>
+    <div class="form-field">
+      <label class="form-label" for="kg-judul">Judul</label>
+      <input type="text" id="kg-judul" name="judul" value="{{ form.judul }}" required autofocus>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="kg-mulai">Mulai</label>
+        <input type="datetime-local" id="kg-mulai" name="tanggal_mulai" value="{{ form.tanggal_mulai }}" required>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="kg-selesai">Selesai</label>
+        <input type="datetime-local" id="kg-selesai" name="tanggal_selesai" value="{{ form.tanggal_selesai }}" required>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="kg-lokasi">Lokasi</label>
+        <input type="text" id="kg-lokasi" name="lokasi" value="{{ form.lokasi }}" placeholder="Nama kota, atau Daring">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="kg-jenis">Jenis kegiatan</label>
+        <select id="kg-jenis" name="jenis_kegiatan">
+          <option value="">Belum ditentukan</option>
+          {% for val, label in jenis_choices %}
+          <option value="{{ val }}" {% if form.jenis_kegiatan == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="kg-desk">Deskripsi</label>
+      <textarea id="kg-desk" name="deskripsi" rows="5">{{ form.deskripsi }}</textarea>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="detail-section-title">Komunitas terkait</h2>
+    <p class="meta">Centang komunitas yang terlibat. Boleh dikosongkan.</p>
+    <div class="input-icon" style="margin-top:var(--s-3)">
+      <label class="sr-only" for="kom-filter">Saring daftar komunitas</label>
+      <svg class="ico" aria-hidden="true"><use href="#i-cari"/></svg>
+      <input type="search" id="kom-filter" placeholder="Saring daftar komunitas" autocomplete="off">
+    </div>
+    <div class="kom-scroll" id="kom-scroll">
+      {% for k in komunitas_all %}
+      <label class="kom-checkbox-item" data-name="{{ k.nama_komunitas|lower }} {{ k.kode|lower }}">
+        <input type="checkbox" name="komunitas" value="{{ k.pk }}" {% if k.pk in kom_ids %}checked{% endif %}>
+        <div style="min-width:0">
+          <div style="font-weight:600;font-size:var(--t-14)">{{ k.nama_komunitas }}</div>
+          <div class="kom-label-sub">{{ k.kode }}</div>
+        </div>
+      </label>
+      {% empty %}
+      <p class="empty-inline">Belum ada komunitas.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="save-bar">
+    <a href="{% url 'admin_kegiatan_data' %}" class="btn btn-secondary">Batal</a>
+    <button type="submit" class="btn btn-primary">Simpan kegiatan</button>
+  </div>
+</form>
+</div>
+
+<script>
+(function(){
+  // Saring daftar centang komunitas (hanya tampilan, tidak mengubah pilihan)
+  const f = document.getElementById('kom-filter');
+  if (!f) return;
+  f.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+  f.addEventListener('input', () => {
+    const q = f.value.trim().toLowerCase();
+    document.querySelectorAll('#kom-scroll .kom-checkbox-item').forEach(el => {
+      el.hidden = q && !el.dataset.name.includes(q);
+    });
+  });
+  // Selesai default = mulai, supaya tidak perlu mengisi ulang tanggal yang sama
+  const mulai = document.getElementById('kg-mulai'), selesai = document.getElementById('kg-selesai');
+  mulai.addEventListener('change', () => {
+    if (!selesai.value || selesai.value < mulai.value) selesai.value = mulai.value;
+    selesai.min = mulai.value;
+  });
+})();
+</script>
+{% endblock %}

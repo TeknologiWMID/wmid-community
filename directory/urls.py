@@ -35,6 +35,7 @@ urlpatterns = [
     path('admin/komunitas/<slug:slug>/edit/', views.admin_komunitas_edit, name='admin_komunitas_edit'),
     path('admin/kegiatan/', views.admin_kegiatan_data, name='admin_kegiatan_data'),
     path('admin/kegiatan/export/', views.admin_kegiatan_export, name='admin_kegiatan_export'),
+    path('admin/kegiatan/tambah/', views.admin_kegiatan_tambah, name='admin_kegiatan_tambah'),
     path('admin/kegiatan/<str:kode>/import/', views.admin_kegiatan_import, name='admin_kegiatan_import'),
     path('admin/verifikasi/', views.admin_kegiatan_list, name='admin_verifikasi'),
     path('admin/kegiatan/<str:kode>/', views.admin_kegiatan_detail, name='admin_kegiatan_detail'),
